@@ -1,5 +1,5 @@
 import winston from "winston";
-import { getConfig } from "../config.js";
+import { getConfig } from "../config";
 
 const config = getConfig();
 

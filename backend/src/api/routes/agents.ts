@@ -3,8 +3,8 @@ import express, { Request, Response } from "express";
 import { z } from "zod";
 import fs from "fs";
 import path from "path";
-import { getConfig } from "../../config.js";
-import { logger } from "../../utils/logger.js";
+import { getConfig } from "../../config";
+import { logger } from "../../utils/logger";
 
 const router = express.Router();
 const config = getConfig();
@@ -48,7 +48,7 @@ router.get("/", (req: Request, res: Response) => {
 /**
  * Get a specific agent by name
  */
-router.get("/:name", (req: Request, res: Response) => {
+router.get("/:name", (req: Request, res: Response): any => {
   try {
     const { name } = req.params;
     const agentPath = path.join(process.cwd(), config.agents.registryPath, `${name}.json`);
@@ -70,7 +70,7 @@ router.get("/:name", (req: Request, res: Response) => {
 /**
  * Register a new agent
  */
-router.post("/", (req: Request, res: Response) => {
+router.post("/", (req: Request, res: Response): any => {
   try {
     const agentData = AgentSchema.parse({
       ...req.body,
@@ -108,7 +108,7 @@ router.post("/", (req: Request, res: Response) => {
 /**
  * Update an existing agent
  */
-router.put("/:name", (req: Request, res: Response) => {
+router.put("/:name", (req: Request, res: Response): any => {
   try {
     const { name } = req.params;
     const agentPath = path.join(process.cwd(), config.agents.registryPath, `${name}.json`);
@@ -151,7 +151,7 @@ router.put("/:name", (req: Request, res: Response) => {
 /**
  * Delete an agent
  */
-router.delete("/:name", (req: Request, res: Response) => {
+router.delete("/:name", (req: Request, res: Response): any => {
   try {
     const { name } = req.params;
     const agentPath = path.join(process.cwd(), config.agents.registryPath, `${name}.json`);

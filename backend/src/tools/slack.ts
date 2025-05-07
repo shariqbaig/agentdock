@@ -1,9 +1,8 @@
-// backend/src/tools/slack.ts
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { z } from "zod";
 import axios from "axios";
-import { getConfig } from "../config.js";
-import { logger } from "../utils/logger.js";
+import { getConfig } from "../config";
+import { logger } from "../utils/logger";
 
 /**
  * Register Slack tools with the MCP server
@@ -30,10 +29,11 @@ export async function registerSlackTools(server: McpServer) {
   // List channels tool
   server.tool(
     "slack_list_channels",
-    z.object({
+    "Slack List Channels",
+    {
       limit: z.number().optional().default(100),
       exclude_archived: z.boolean().optional().default(true)
-    }),
+    },
     async ({ limit, exclude_archived }) => {
       try {
         const response = await slackClient.get("/conversations.list", {
@@ -79,12 +79,13 @@ export async function registerSlackTools(server: McpServer) {
   // Get channel history tool
   server.tool(
     "slack_get_channel_history",
-    z.object({
+    "Slack Get Channel History",
+    {
       channel: z.string(),
       limit: z.number().optional().default(50),
       oldest: z.string().optional(), // Unix timestamp
       latest: z.string().optional() // Unix timestamp
-    }),
+    },
     async ({ channel, limit, oldest, latest }) => {
       try {
         const response = await slackClient.get("/conversations.history", {
@@ -133,13 +134,14 @@ export async function registerSlackTools(server: McpServer) {
   // Send message tool
   server.tool(
     "slack_send_message",
-    z.object({
+    "Slack Send Message",
+    {
       channel: z.string(),
       text: z.string(),
       thread_ts: z.string().optional(), // Reply in thread if provided
       unfurl_links: z.boolean().optional().default(true),
       unfurl_media: z.boolean().optional().default(true)
-    }),
+    },
     async ({ channel, text, thread_ts, unfurl_links, unfurl_media }) => {
       try {
         const response = await slackClient.post("/chat.postMessage", {
@@ -188,11 +190,12 @@ export async function registerSlackTools(server: McpServer) {
   // Update message tool
   server.tool(
     "slack_update_message",
-    z.object({
+    "Slack Update Message",
+    {
       channel: z.string(),
       ts: z.string(), // Timestamp of message to update
       text: z.string()
-    }),
+    },
     async ({ channel, ts, text }) => {
       try {
         const response = await slackClient.post("/chat.update", {
@@ -234,11 +237,12 @@ export async function registerSlackTools(server: McpServer) {
   // Add reaction tool
   server.tool(
     "slack_add_reaction",
-    z.object({
+    "Slack Add Reaction",
+    {
       channel: z.string(),
       timestamp: z.string(),
       name: z.string() // Emoji name without colons
-    }),
+    },
     async ({ channel, timestamp, name }) => {
       try {
         const response = await slackClient.post("/reactions.add", {

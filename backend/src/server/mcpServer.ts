@@ -1,13 +1,12 @@
 // backend/src/server/mcpServer.ts
-import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { z } from "zod";
-import { logger } from "../utils/logger.js";
-import { registerGitHubTools } from "../tools/github.js";
-import { registerSlackTools } from "../tools/slack.js";
-import { registerJiraTools } from "../tools/jira.js";
-import { getConfig } from "../config.js";
+import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp";
+import { logger } from "../utils/logger";
+import { registerGitHubTools } from "../tools/github";
+import { registerSlackTools } from "../tools/slack";
+import { registerJiraTools } from "../tools/jira";
+import { getConfig } from "../config";
 
 /**
  * Creates and configures the MCP server with tools and resources
@@ -32,7 +31,17 @@ export async function createMCPServer() {
   // Register example resource
   server.resource(
     "agents",
-    new ResourceTemplate("agents://{name}", { list: async () => ["agents://all"] }),
+    new ResourceTemplate("agents://{name}", { 
+      list: async () => ({
+        resources: [
+          {
+            name: "All Agents",
+            uri: "agents://all",
+            description: "Information about all registered agents"
+          }
+        ]
+      })
+    }),
     async (uri, { name }) => {
       if (name === "all") {
         // Get all registered agents
@@ -66,8 +75,8 @@ export async function createMCPServer() {
     logger.info("MCP Server started with stdio transport");
   } else {
     const port = config.server.port || 3001;
+    // Create HTTP transport
     const transport = new StreamableHTTPServerTransport({
-      port,
       sessionIdGenerator: () => Math.random().toString(36).substring(2, 15),
     });
     await server.connect(transport);

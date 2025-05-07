@@ -1,12 +1,11 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
-import { z } from "zod";
-import { getConfig } from "../config.js";
-import { logger } from "../utils/logger.js";
-import { agentRoutes } from "./routes/agents.js";
-import { toolRoutes } from "./routes/tools.js";
-import { queryRoutes } from "./routes/query.js";
-import { logsRoutes } from "./routes/logs.js";
+import { getConfig } from "../config";
+import { logger } from "../utils/logger";
+import { agentRoutes } from "./routes/agents";
+import { toolRoutes } from "./routes/tools";
+import { queryRoutes } from "./routes/query";
+import { logsRoutes } from "./routes/logs";
 
 /**
  * Configure and start the REST API server

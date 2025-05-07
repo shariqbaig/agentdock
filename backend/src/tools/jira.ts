@@ -1,8 +1,8 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { z } from "zod";
 import axios from "axios";
-import { getConfig } from "../config.js";
-import { logger } from "../utils/logger.js";
+import { getConfig } from "../config";
+import { logger } from "../utils/logger";
 
 /**
  * Register Jira tools with the MCP server
@@ -32,7 +32,7 @@ export async function registerJiraTools(server: McpServer) {
   // Search issues with JQL tool
   server.tool(
     "jira_search_issues",
-    z.object({
+    {
       jql: z.string(),
       maxResults: z.number().optional().default(50),
       startAt: z.number().optional().default(0),
@@ -40,7 +40,7 @@ export async function registerJiraTools(server: McpServer) {
         "summary", "status", "assignee", "reporter", "priority",
         "issuetype", "created", "updated", "description"
       ])
-    }),
+    },
     async ({ jql, maxResults, startAt, fields }) => {
       try {
         const response = await jiraClient.post("/search", {
@@ -100,13 +100,13 @@ export async function registerJiraTools(server: McpServer) {
   // Get issue details tool
   server.tool(
     "jira_get_issue",
-    z.object({
+    {
       issueKey: z.string(),
       fields: z.array(z.string()).optional().default([
         "summary", "status", "assignee", "reporter", "priority",
         "issuetype", "created", "updated", "description", "comment"
       ])
-    }),
+    },
     async ({ issueKey, fields }) => {
       try {
         const response = await jiraClient.get(`/issue/${issueKey}`, {
@@ -171,7 +171,7 @@ export async function registerJiraTools(server: McpServer) {
   // Create issue tool
   server.tool(
     "jira_create_issue",
-    z.object({
+    {
       projectKey: z.string(),
       summary: z.string(),
       description: z.string().optional(),
@@ -181,7 +181,7 @@ export async function registerJiraTools(server: McpServer) {
       labels: z.array(z.string()).optional(),
       components: z.array(z.string()).optional(),
       customFields: z.record(z.any()).optional() // For custom fields
-    }),
+    },
     async ({ projectKey, summary, description, issueType, priority, assignee, labels, components, customFields }) => {
       try {
         // Build the issue creation payload
@@ -238,7 +238,7 @@ export async function registerJiraTools(server: McpServer) {
   // Update issue tool
   server.tool(
     "jira_update_issue",
-    z.object({
+    {
       issueKey: z.string(),
       summary: z.string().optional(),
       description: z.string().optional(),
@@ -247,7 +247,7 @@ export async function registerJiraTools(server: McpServer) {
       labels: z.array(z.string()).optional(),
       components: z.array(z.string()).optional(),
       customFields: z.record(z.any()).optional() // For custom fields
-    }),
+    },
     async ({ issueKey, summary, description, assignee, priority, labels, components, customFields }) => {
       try {
         // Build the issue update payload
@@ -300,10 +300,10 @@ export async function registerJiraTools(server: McpServer) {
   // Add comment to issue tool
   server.tool(
     "jira_add_comment",
-    z.object({
+    {
       issueKey: z.string(),
       comment: z.string()
-    }),
+    },
     async ({ issueKey, comment }) => {
       try {
         const response = await jiraClient.post(`/issue/${issueKey}/comment`, {
@@ -344,13 +344,13 @@ export async function registerJiraTools(server: McpServer) {
   // Transition issue tool
   server.tool(
     "jira_transition_issue",
-    z.object({
+    {
       issueKey: z.string(),
       transitionId: z.string().optional(),
       transitionName: z.string().optional(),
       comment: z.string().optional(),
       resolution: z.string().optional()
-    }),
+    },
     async ({ issueKey, transitionId, transitionName, comment, resolution }) => {
       try {
         // If transitionName is provided but not transitionId, find the transition ID

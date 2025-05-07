@@ -1,8 +1,7 @@
-// backend/src/index.ts
-import { createMCPServer } from './server/mcpServer.js';
-import { setupRESTApi } from './api/index.js';
-import { getConfig } from './config.js';
-import { logger } from './utils/logger.js';
+import { createMCPServer } from './server/mcpServer';
+import { setupRESTApi } from './api/index';
+import { getConfig } from './config';
+import { logger } from './utils/logger';
 
 /**
  * Main application entry point

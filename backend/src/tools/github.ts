@@ -1,8 +1,8 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { z } from "zod";
 import axios from "axios";
-import { getConfig } from "../config.js";
-import { logger } from "../utils/logger.js";
+import { getConfig } from "../config";
+import { logger } from "../utils/logger";
 
 /**
  * Register GitHub tools with the MCP server
@@ -29,10 +29,10 @@ export async function registerGitHubTools(server: McpServer) {
   // List repositories tool
   server.tool(
     "github_list_repos",
-    z.object({
+    {
       page: z.number().optional().default(1),
       per_page: z.number().optional().default(30)
-    }),
+    },
     async ({ page, per_page }) => {
       try {
         const response = await githubClient.get("/user/repos", {
@@ -73,11 +73,11 @@ export async function registerGitHubTools(server: McpServer) {
   // Get PR details tool
   server.tool(
     "github_get_pr",
-    z.object({
+    {
       owner: z.string(),
       repo: z.string(),
       pull_number: z.number()
-    }),
+    },
     async ({ owner, repo, pull_number }) => {
       try {
         const response = await githubClient.get(`/repos/${owner}/${repo}/pulls/${pull_number}`);
@@ -139,12 +139,12 @@ export async function registerGitHubTools(server: McpServer) {
   // Create comment on PR tool
   server.tool(
     "github_create_pr_comment",
-    z.object({
+    {
       owner: z.string(),
       repo: z.string(),
       pull_number: z.number(),
       body: z.string()
-    }),
+    },
     async ({ owner, repo, pull_number, body }) => {
       try {
         const response = await githubClient.post(
@@ -182,13 +182,13 @@ export async function registerGitHubTools(server: McpServer) {
   // Trigger CI/CD workflow tool
   server.tool(
     "github_trigger_workflow",
-    z.object({
+    {
       owner: z.string(),
       repo: z.string(),
       workflow_id: z.string(), // Can be workflow file name or ID
       ref: z.string().default("main"), // Branch or tag reference
       inputs: z.record(z.string()).optional() // Workflow inputs if any
-    }),
+    },
     async ({ owner, repo, workflow_id, ref, inputs }) => {
       try {
         const response = await githubClient.post(

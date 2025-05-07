@@ -3,9 +3,9 @@ import express, { Request, Response } from "express";
 import { z } from "zod";
 import fs from "fs";
 import path from "path";
-import { groqClient } from "../../services/groq.js";
-import { getConfig } from "../../config.js";
-import { logger } from "../../utils/logger.js";
+import { groqClient } from "../../services/groq";
+import { getConfig } from "../../config";
+import { logger } from "../../utils/logger";
 
 const router = express.Router();
 const config = getConfig();
@@ -33,7 +33,7 @@ type LogEntry = z.infer<typeof LogEntrySchema>;
 /**
  * Process a natural language query
  */
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", async (req: Request, res: Response): Promise<any> => {
   const startTime = Date.now();
   let logEntry: Partial<LogEntry> = {
     id: Date.now().toString(),

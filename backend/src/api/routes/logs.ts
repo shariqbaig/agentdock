@@ -2,8 +2,7 @@ import express, { Request, Response } from "express";
 import fs from "fs";
 import path from "path";
 import { z } from "zod";
-import { getConfig } from "../../config.js";
-import { logger } from "../../utils/logger.js";
+import { logger } from "../../utils/logger";
 
 const router = express.Router();
 
@@ -17,7 +16,7 @@ const PaginationSchema = z.object({
 /**
  * Get paginated query logs
  */
-router.get("/queries", (req: Request, res: Response) => {
+router.get("/queries", (req: Request, res: Response): any => {
   try {
     const { page, limit, sort } = PaginationSchema.parse(req.query);
     const pageNumber = parseInt(page);
@@ -93,7 +92,7 @@ router.get("/queries", (req: Request, res: Response) => {
 /**
  * Get a specific query log by ID
  */
-router.get("/queries/:id", (req: Request, res: Response) => {
+router.get("/queries/:id", (req: Request, res: Response): any => {
   try {
     const { id } = req.params;
     const logFilePath = path.join(process.cwd(), "logs", "queries", `${id}.json`);
@@ -115,7 +114,7 @@ router.get("/queries/:id", (req: Request, res: Response) => {
 /**
  * Get daily logs for a specific date
  */
-router.get("/daily/:date", (req: Request, res: Response) => {
+router.get("/daily/:date", (req: Request, res: Response): any => {
   try {
     const { date } = req.params;
     
@@ -150,7 +149,7 @@ router.get("/daily/:date", (req: Request, res: Response) => {
 /**
  * Get system logs
  */
-router.get("/system", (req: Request, res: Response) => {
+router.get("/system", (req: Request, res: Response): any => {
   try {
     const { lines = "100" } = req.query;
     const linesNumber = parseInt(lines as string);
@@ -185,7 +184,7 @@ router.get("/system", (req: Request, res: Response) => {
 /**
  * Get error logs
  */
-router.get("/errors", (req: Request, res: Response) => {
+router.get("/errors", (req: Request, res: Response): any => {
   try {
     const { lines = "100" } = req.query;
     const linesNumber = parseInt(lines as string);

@@ -1,8 +1,7 @@
 // backend/src/api/routes/tools.ts
 import express, { Request, Response } from "express";
-import { z } from "zod";
-import { getConfig } from "../../config.js";
-import { logger } from "../../utils/logger.js";
+import { getConfig } from "../../config";
+import { logger } from "../../utils/logger";
 
 const router = express.Router();
 
@@ -127,7 +126,7 @@ router.get("/categories", (req: Request, res: Response) => {
 /**
  * Get tools for a specific category
  */
-router.get("/category/:category", (req: Request, res: Response) => {
+router.get("/category/:category", (req: Request, res: Response): any => {
   try {
     const { category } = req.params;
     
@@ -140,7 +139,9 @@ router.get("/category/:category", (req: Request, res: Response) => {
     let tools = availableTools[category as keyof typeof availableTools];
     
     // Filter out disabled tools based on config
-    const categoryEnabled = config[category as keyof typeof config]?.enabled || false;
+    const categoryConfig = config[category as keyof typeof config];
+    const categoryEnabled = 'enabled' in categoryConfig ? categoryConfig.enabled : false;
+    
     if (!categoryEnabled) {
       tools = tools.map(tool => ({ ...tool, enabled: false }));
     }
@@ -161,7 +162,9 @@ router.get("/", (req: Request, res: Response) => {
     
     // Combine all tools and set enabled status based on configuration
     const allTools = Object.entries(availableTools).flatMap(([category, tools]) => {
-      const categoryEnabled = config[category as keyof typeof config]?.enabled || false;
+      const categoryConfig = config[category as keyof typeof config];
+      const categoryEnabled = 'enabled' in categoryConfig ? categoryConfig.enabled : false;
+
       return tools.map(tool => ({
         ...tool,
         category,
@@ -179,7 +182,7 @@ router.get("/", (req: Request, res: Response) => {
 /**
  * Get details for a specific tool
  */
-router.get("/:toolName", (req: Request, res: Response) => {
+router.get("/:toolName", (req: Request, res: Response): any => {
   try {
     const { toolName } = req.params;
     
@@ -189,8 +192,8 @@ router.get("/:toolName", (req: Request, res: Response) => {
       
       if (tool) {
         const config = getConfig();
-        const categoryEnabled = config[category as keyof typeof config]?.enabled || false;
-        
+        const categoryConfig = config[category as keyof typeof config];
+        const categoryEnabled = 'enabled' in categoryConfig ? categoryConfig.enabled : false;
         return res.status(200).json({
           ...tool,
           category,

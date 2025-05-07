@@ -1,6 +1,6 @@
 import axios from "axios";
-import { getConfig } from "../config.js";
-import { logger } from "../utils/logger.js";
+import { getConfig } from "../config";
+import { logger } from "../utils/logger";
 
 interface ChatMessage {
   role: "system" | "user" | "assistant";
