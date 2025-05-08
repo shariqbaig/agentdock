@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
-    "module": "esnext",
-    "target": "es2016",
+    "module": "CommonJS",
+    "target": "ES6",
     "moduleResolution": "node",
     "esModuleInterop": true,
+    "typeRoots": ["./types"],
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src"],
   "exclude": ["node_modules"]
 }

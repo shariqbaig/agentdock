@@ -3,10 +3,9 @@
   "version": "1.0.0",
   "description": "MCP server with UI for managing intelligent agents",
   "main": "dist/index.js",
-  "type":"module",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "npx ts-node src/index.ts",
     "dev": "nodemon --exec ts-node src/index.ts",
     "test": "jest"
   },
@@ -22,8 +21,9 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
-    "@types/node": "^22.15.14",
+    "@types/node": "^22.15.16",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }
 }
