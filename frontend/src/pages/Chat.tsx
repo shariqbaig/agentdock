@@ -3,41 +3,40 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
-  Flex,
-  Heading,
-  Text,
-  Input,
+  Typography,
+  TextField,
   Button,
-  VStack,
-  HStack,
+  Stack,
   Avatar,
   IconButton,
   Divider,
   Card,
   CardHeader,
-  CardBody,
+  CardContent,
   Menu,
-  MenuButton,
-  MenuList,
   MenuItem,
+  FormControl,
+  InputLabel,
   Select,
-  Badge,
-  useColorModeValue,
-  Spinner,
+  Chip,
+  useTheme,
+  CircularProgress,
   Alert,
-  AlertIcon,
+  AlertTitle,
   Tooltip,
-} from '@chakra-ui/react';
+  Paper,
+  SelectChangeEvent,
+} from '@mui/material';
 import {
-  FiSend,
-  FiMoreVertical,
-  FiCopy,
-  FiRefreshCw,
-  FiDownload,
-  FiTrash2,
-  FiUser,
-  FiInfo,
-} from 'react-icons/fi';
+  Send as SendIcon,
+  MoreVert as MoreVertIcon,
+  ContentCopy as CopyIcon,
+  Refresh as RefreshIcon,
+  Download as DownloadIcon,
+  Delete as DeleteIcon,
+  Person as PersonIcon,
+  Info as InfoIcon,
+} from '@mui/icons-material';
 import { useAppContext } from '../context/AppContext';
 import apiService, { QueryRequest, QueryResponse } from '../services/api';
 
@@ -52,34 +51,36 @@ interface Message {
 const Chat: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const theme = useTheme();
   const { agents, fetchAgents } = useAppContext();
-  
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  // Card styling
-  const userBg = useColorModeValue('blue.50', 'blue.900');
-  const agentBg = useColorModeValue('gray.50', 'gray.700');
-  const systemBg = useColorModeValue('yellow.50', 'yellow.900');
-  
+
+  // User and agent message styling
+  const userBg = theme.palette.primary.light;
+  const userText = theme.palette.getContrastText(userBg);
+  const agentBg = theme.palette.mode === 'light' ? theme.palette.grey[100] : theme.palette.grey[800];
+
   // Fetch agents on component mount
   useEffect(() => {
     fetchAgents();
-  }, []);
-  
+  }, [fetchAgents]);
+
   // Parse agent from URL query params
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const agentParam = params.get('agent');
-    
+
     if (agentParam && agents.some(a => a.name === agentParam)) {
       setSelectedAgent(agentParam);
-      
+
       // Add system message about selected agent
       const agent = agents.find(a => a.name === agentParam);
       if (agent) {
@@ -94,22 +95,22 @@ const Chat: React.FC = () => {
       }
     }
   }, [location.search, agents]);
-  
+
   // Scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-  
+
   // Handle agent selection
-  const handleAgentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const agentName = e.target.value || null;
+  const handleAgentChange = (event: SelectChangeEvent<string>) => {
+    const agentName = event.target.value || null;
     setSelectedAgent(agentName);
-    
+
     // Update URL with selected agent
     const params = new URLSearchParams(location.search);
     if (agentName) {
       params.set('agent', agentName);
-      
+
       // Add system message about selected agent
       const agent = agents.find(a => a.name === agentName);
       if (agent) {
@@ -124,7 +125,7 @@ const Chat: React.FC = () => {
       }
     } else {
       params.delete('agent');
-      
+
       // Add system message about general chat
       setMessages([
         {
@@ -135,14 +136,14 @@ const Chat: React.FC = () => {
         }
       ]);
     }
-    
+
     navigate({ search: params.toString() });
   };
-  
+
   // Send message
   const sendMessage = async () => {
     if (!input.trim()) return;
-    
+
     // Add user message
     const userMessage: Message = {
       id: `user-${Date.now()}`,
@@ -150,22 +151,22 @@ const Chat: React.FC = () => {
       content: input,
       timestamp: new Date(),
     };
-    
+
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsProcessing(true);
     setError(null);
-    
+
     try {
       // Prepare query request
       const queryRequest: QueryRequest = {
         query: input,
         agent: selectedAgent || undefined,
       };
-      
+
       // Process query
       const response = await apiService.processQuery(queryRequest);
-      
+
       // Add agent response
       const agentMessage: Message = {
         id: response.id,
@@ -174,7 +175,7 @@ const Chat: React.FC = () => {
         timestamp: new Date(),
         agent: selectedAgent || undefined,
       };
-      
+
       setMessages(prev => [...prev, agentMessage]);
     } catch (error: any) {
       console.error('Error processing query:', error);
@@ -183,12 +184,12 @@ const Chat: React.FC = () => {
       setIsProcessing(false);
     }
   };
-  
+
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
   };
-  
+
   // Handle key press
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -196,12 +197,12 @@ const Chat: React.FC = () => {
       sendMessage();
     }
   };
-  
+
   // Handle copy message
   const copyMessage = (content: string) => {
     navigator.clipboard.writeText(content);
   };
-  
+
   // Clear chat history
   const clearChat = () => {
     // Keep system message if agent is selected
@@ -219,165 +220,215 @@ const Chat: React.FC = () => {
         return;
       }
     }
-    
+
     setMessages([]);
   };
 
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+  };
+
   return (
-    <Box pt={5} pb={10} h="calc(100vh - 150px)" display="flex" flexDirection="column">
-      <Flex mb={6} justifyContent="space-between" alignItems="center">
-        <Heading size="lg">Chat</Heading>
-        <HStack spacing={4}>
-          <Select
-            placeholder="Select Agent"
-            value={selectedAgent || ''}
-            onChange={handleAgentChange}
-            width="250px"
-            variant="filled"
+    <Box sx={{ pt: 5, pb: 10, height: "calc(100vh - 150px)", display: "flex", flexDirection: "column" }}>
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4" component="h1">Chat</Typography>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <FormControl variant="outlined" sx={{ minWidth: 250 }}>
+            <InputLabel id="agent-select-label">Select Agent</InputLabel>
+            <Select
+              labelId="agent-select-label"
+              id="agent-select"
+              value={selectedAgent || ''}
+              onChange={handleAgentChange}
+              label="Select Agent"
+            >
+              <MenuItem value="">General Chat</MenuItem>
+              {agents
+                .filter(agent => agent.enabled)
+                .map(agent => (
+                  <MenuItem key={agent.name} value={agent.name}>
+                    {agent.name}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+
+          <IconButton
+            aria-label="more options"
+            aria-controls="chat-menu"
+            aria-haspopup="true"
+            onClick={handleMenuOpen}
           >
-            <option value="">General Chat</option>
-            {agents
-              .filter(agent => agent.enabled)
-              .map(agent => (
-                <option key={agent.name} value={agent.name}>
-                  {agent.name}
-                </option>
-              ))}
-          </Select>
-          
-          <Menu>
-            <MenuButton
-              as={IconButton}
-              icon={<FiMoreVertical />}
-              variant="ghost"
-              aria-label="More options"
-            />
-            <MenuList>
-              <MenuItem icon={<FiDownload />} onClick={() => console.log('Export chat')}>
-                Export Chat
-              </MenuItem>
-              <MenuItem icon={<FiTrash2 />} onClick={clearChat}>
-                Clear Chat
-              </MenuItem>
-            </MenuList>
+            <MoreVertIcon />
+          </IconButton>
+          <Menu
+            id="chat-menu"
+            anchorEl={menuAnchorEl}
+            keepMounted
+            open={Boolean(menuAnchorEl)}
+            onClose={handleMenuClose}
+          >
+            <MenuItem onClick={() => { handleMenuClose(); console.log('Export chat'); }}>
+              <DownloadIcon sx={{ mr: 1 }} />
+              Export Chat
+            </MenuItem>
+            <MenuItem onClick={() => { handleMenuClose(); clearChat(); }}>
+              <DeleteIcon sx={{ mr: 1 }} />
+              Clear Chat
+            </MenuItem>
           </Menu>
-        </HStack>
-      </Flex>
-      
+        </Stack>
+      </Box>
+
       {/* Chat Messages */}
-      <Box
-        flex="1"
-        overflowY="auto"
-        mb={4}
-        px={2}
-        py={4}
-        borderWidth="1px"
-        borderRadius="lg"
-        borderColor={useColorModeValue('gray.200', 'gray.700')}
-        bg={useColorModeValue('white', 'gray.800')}
+      <Paper
+        elevation={2}
+        sx={{
+          flex: 1,
+          overflowY: "auto",
+          mb: 3,
+          px: 2,
+          py: 3,
+          borderRadius: 2,
+        }}
       >
         {messages.length === 0 ? (
-          <Flex
-            height="100%"
-            flexDirection="column"
-            justifyContent="center"
-            alignItems="center"
-            color="gray.500"
+          <Box
+            sx={{
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              color: "text.secondary",
+            }}
           >
-            <FiInfo size={30} />
-            <Text mt={4}>No messages yet. Start a conversation!</Text>
+            <InfoIcon sx={{ fontSize: 40, mb: 2 }} />
+            <Typography variant="body1" sx={{ mb: 1 }}>
+              No messages yet. Start a conversation!
+            </Typography>
             {selectedAgent ? (
-              <Badge mt={2} colorScheme="brand">
-                {selectedAgent} is ready to help
-              </Badge>
+              <Chip
+                label={`${selectedAgent} is ready to help`}
+                color="primary"
+                sx={{ mt: 1 }}
+              />
             ) : (
-              <Text fontSize="sm" mt={2}>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 Try selecting an agent for specialized assistance
-              </Text>
+              </Typography>
             )}
-          </Flex>
+          </Box>
         ) : (
-          <VStack spacing={4} align="stretch">
+          <Stack spacing={2}>
             {messages.map((message) => (
               <Box key={message.id}>
                 {message.role === 'system' ? (
-                  <Alert status="info" borderRadius="md">
-                    <AlertIcon />
-                    <Text>{message.content}</Text>
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    <Typography>{message.content}</Typography>
                   </Alert>
                 ) : (
-                  <Flex justify={message.role === 'user' ? 'flex-end' : 'flex-start'}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
+                    }}
+                  >
                     <Card
-                      maxW="80%"
-                      bg={message.role === 'user' ? userBg : agentBg}
-                      borderRadius="lg"
+                      elevation={1}
+                      sx={{
+                        maxWidth: '80%',
+                        bgcolor: message.role === 'user' ? userBg : agentBg,
+                        color: message.role === 'user' ? userText : 'text.primary',
+                        borderRadius: 2,
+                      }}
                     >
-                      <CardHeader pb={1}>
-                        <Flex justify="space-between" align="center">
-                          <HStack>
-                            <Avatar
-                              size="xs"
-                              icon={<FiUser />}
-                              bg={message.role === 'user' ? 'blue.500' : 'brand.500'}
-                            />
-                            <Text fontWeight="bold">
-                              {message.role === 'user' ? 'You' : message.agent || 'Assistant'}
-                            </Text>
-                          </HStack>
-                          <Text fontSize="xs" color="gray.500">
-                            {message.timestamp.toLocaleTimeString()}
-                          </Text>
-                        </Flex>
-                      </CardHeader>
-                      <CardBody pt={1}>
-                        <Text whiteSpace="pre-wrap">{message.content}</Text>
-                        
+                      <CardHeader
+                        avatar={
+                          <Avatar
+                            sx={{
+                              bgcolor: message.role === 'user' ? 'primary.main' : 'secondary.main',
+                              width: 32,
+                              height: 32
+                            }}
+                          >
+                            <PersonIcon fontSize="small" />
+                          </Avatar>
+                        }
+                        title={message.role === 'user' ? 'You' : message.agent || 'Assistant'}
+                        subheader={message.timestamp.toLocaleTimeString()}
+                        subheaderTypographyProps={{
+                          variant: 'caption',
+                          color: message.role === 'user' ? 'primary.contrastText' : 'text.secondary'
+                        }}
+                        titleTypographyProps={{
+                          variant: 'subtitle2',
+                          color: message.role === 'user' ? 'primary.contrastText' : 'text.primary'
+                        }}
+                        sx={{ pb: 0.5 }}
+                      />
+                      <CardContent sx={{ pt: 0.5 }}>
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            whiteSpace: 'pre-wrap',
+                            color: message.role === 'user' ? 'primary.contrastText' : 'text.primary'
+                          }}
+                        >
+                          {message.content}
+                        </Typography>
+
                         {message.role === 'agent' && (
-                          <Flex justifyContent="flex-end" mt={2}>
-                            <Tooltip label="Copy message">
+                          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+                            <Tooltip title="Copy message">
                               <IconButton
-                                aria-label="Copy message"
-                                icon={<FiCopy />}
-                                size="xs"
-                                variant="ghost"
+                                size="small"
                                 onClick={() => copyMessage(message.content)}
-                              />
+                                sx={{ color: 'text.secondary' }}
+                              >
+                                <CopyIcon fontSize="small" />
+                              </IconButton>
                             </Tooltip>
-                          </Flex>
+                          </Box>
                         )}
-                      </CardBody>
+                      </CardContent>
                     </Card>
-                  </Flex>
+                  </Box>
                 )}
               </Box>
             ))}
-            
+
             {/* Error message */}
             {error && (
-              <Alert status="error" borderRadius="md">
-                <AlertIcon />
-                <Text>{error}</Text>
+              <Alert severity="error" sx={{ mt: 2 }}>
+                <AlertTitle>Error</AlertTitle>
+                {error}
               </Alert>
             )}
-            
+
             {/* Processing indicator */}
             {isProcessing && (
-              <Flex justify="center" p={4}>
-                <HStack>
-                  <Spinner size="sm" color="brand.500" />
-                  <Text>Processing...</Text>
-                </HStack>
-              </Flex>
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                <CircularProgress size={24} sx={{ mr: 1 }} />
+                <Typography variant="body2" color="text.secondary">
+                  Processing...
+                </Typography>
+              </Box>
             )}
-            
+
             <div ref={messagesEndRef} />
-          </VStack>
+          </Stack>
         )}
-      </Box>
-      
+      </Paper>
+
       {/* Chat Input */}
-      <HStack spacing={2}>
-        <Input
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <TextField
+          fullWidth
           placeholder={
             selectedAgent
               ? `Ask ${selectedAgent} anything...`
@@ -386,19 +437,24 @@ const Chat: React.FC = () => {
           value={input}
           onChange={handleInputChange}
           onKeyPress={handleKeyPress}
-          size="lg"
+          variant="outlined"
           disabled={isProcessing}
+          size="medium"
+          InputProps={{
+            sx: { borderRadius: 2 }
+          }}
         />
-        <IconButton
-          colorScheme="brand"
-          aria-label="Send message"
-          icon={<FiSend />}
-          size="lg"
-          isLoading={isProcessing}
+        <Button
+          variant="contained"
+          color="primary"
+          endIcon={<SendIcon />}
           onClick={sendMessage}
           disabled={!input.trim() || isProcessing}
-        />
-      </HStack>
+          sx={{ borderRadius: 2, px: 3 }}
+        >
+          Send
+        </Button>
+      </Box>
     </Box>
   );
 };

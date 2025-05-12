@@ -68,8 +68,8 @@ class ApiService {
   private readonly baseUrl: string;
 
   constructor() {
-    this.baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-    
+    this.baseUrl = 'http://localhost:3001/api';
+
     this.api = axios.create({
       baseURL: this.baseUrl,
       headers: {

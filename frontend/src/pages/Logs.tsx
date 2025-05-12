@@ -2,69 +2,93 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Flex,
-  Heading,
-  Text,
+  Typography,
   Tabs,
-  TabList,
-  TabPanels,
   Tab,
-  TabPanel,
   Card,
   CardHeader,
-  CardBody,
+  CardContent,
   Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Badge,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
+  Chip,
   Button,
   IconButton,
-  HStack,
-  VStack,
+  Stack,
   Collapse,
-  Input,
-  InputGroup,
-  InputLeftElement,
+  TextField,
+  InputAdornment,
+  FormControl,
+  InputLabel,
   Select,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  ModalCloseButton,
-  useDisclosure,
-  useColorModeValue,
-  Spinner,
-  Alert,
-  AlertIcon,
-  Code,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  useTheme,
   Divider,
-  Tooltip
-} from '@chakra-ui/react';
+  Paper,
+  Alert,
+  CircularProgress,
+  Tooltip,
+  SelectChangeEvent,
+} from '@mui/material';
 import {
-  FiSearch,
-  FiCalendar,
-  FiFilter,
-  FiInfo,
-  FiChevronDown,
-  FiChevronUp,
-  FiRefreshCw,
-  FiClock,
-  FiDownload,
-  FiCopy,
-  FiSend,
-  FiMessageSquare,
-  FiAlertCircle,
-  FiUser,
-  FiServer
-} from 'react-icons/fi';
+  Search as SearchIcon,
+  CalendarToday as CalendarIcon,
+  FilterList as FilterIcon,
+  Info as InfoIcon,
+  KeyboardArrowDown as ChevronDownIcon,
+  KeyboardArrowUp as ChevronUpIcon,
+  Refresh as RefreshIcon,
+  AccessTime as ClockIcon,
+  Download as DownloadIcon,
+  ContentCopy as CopyIcon,
+  Send as SendIcon,
+  Message as MessageIcon,
+  Warning as AlertCircleIcon,
+  Person as UserIcon,
+  Storage as ServerIcon,
+  Code as CodeIcon,
+} from '@mui/icons-material';
 import apiService, { Log, PaginatedLogs } from '../services/api';
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`log-tabpanel-${index}`}
+      aria-labelledby={`log-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ pt: 2 }}>{children}</Box>}
+    </div>
+  );
+}
+
+function a11yProps(index: number) {
+  return {
+    id: `log-tab-${index}`,
+    'aria-controls': `log-tabpanel-${index}`,
+  };
+}
+
 const Logs: React.FC = () => {
+  const theme = useTheme();
+
   // Query logs state
   const [logs, setLogs] = useState<Log[]>([]);
   const [pagination, setPagination] = useState({
@@ -74,30 +98,30 @@ const Logs: React.FC = () => {
     totalPages: 0,
   });
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
-  
+
   // System logs state
   const [systemLogs, setSystemLogs] = useState<string[]>([]);
   const [isLoadingSystemLogs, setIsLoadingSystemLogs] = useState(false);
-  
+
   // Error logs state
   const [errorLogs, setErrorLogs] = useState<string[]>([]);
   const [isLoadingErrorLogs, setIsLoadingErrorLogs] = useState(false);
-  
+
+  // Tab state
+  const [tabValue, setTabValue] = useState(0);
+
   // Modal state
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedLog, setSelectedLog] = useState<Log | null>(null);
-  
+
   // Expanded rows state
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
-  
+
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
   const [agentFilter, setAgentFilter] = useState('all');
-  
-  // Card background
-  const cardBg = useColorModeValue('white', 'gray.800');
-  
+
   // Fetch query logs
   const fetchQueryLogs = async (page: number = 1) => {
     setIsLoadingLogs(true);
@@ -111,7 +135,7 @@ const Logs: React.FC = () => {
       setIsLoadingLogs(false);
     }
   };
-  
+
   // Fetch system logs
   const fetchSystemLogs = async () => {
     setIsLoadingSystemLogs(true);
@@ -124,7 +148,7 @@ const Logs: React.FC = () => {
       setIsLoadingSystemLogs(false);
     }
   };
-  
+
   // Fetch error logs
   const fetchErrorLogs = async () => {
     setIsLoadingErrorLogs(true);
@@ -137,19 +161,24 @@ const Logs: React.FC = () => {
       setIsLoadingErrorLogs(false);
     }
   };
-  
+
   // Fetch logs on component mount
   useEffect(() => {
     fetchQueryLogs();
     fetchSystemLogs();
     fetchErrorLogs();
   }, []);
-  
+
   // Handle page change
   const handlePageChange = (newPage: number) => {
     fetchQueryLogs(newPage);
   };
-  
+
+  // Handle tab change
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
   // Handle row expansion
   const toggleRowExpansion = (id: string) => {
     setExpandedRows(prev => ({
@@ -157,96 +186,111 @@ const Logs: React.FC = () => {
       [id]: !prev[id],
     }));
   };
-  
-  // Handle log selection for modal
+
+  // Handle log selection for dialog
   const handleLogSelect = (log: Log) => {
     setSelectedLog(log);
-    onOpen();
+    setDialogOpen(true);
   };
-  
+
   // Format timestamp
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleString();
   };
-  
+
   // Format response time
   const formatResponseTime = (responseTime: number) => {
     return (responseTime / 1000).toFixed(2) + 's';
   };
-  
+
   // Generate pagination buttons
   const generatePaginationControls = () => {
     const { page, totalPages } = pagination;
-    
+
     // Calculate pages to show (max 5)
     let startPage = Math.max(1, page - 2);
     const endPage = Math.min(startPage + 4, totalPages);
-    
+
     if (endPage - startPage < 4) {
       startPage = Math.max(1, endPage - 4);
     }
-    
-    const pages = [];
+
+    const pages: any = [];
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
-    
+
     return (
-      <HStack spacing={2} mt={4}>
+      <Stack direction="row" spacing={1} sx={{ mt: 3, justifyContent: 'center' }}>
         <Button
-          size="sm"
+          size="small"
+          variant="outlined"
           onClick={() => handlePageChange(1)}
           disabled={page === 1}
         >
           First
         </Button>
-        
+
         <Button
-          size="sm"
+          size="small"
+          variant="outlined"
           onClick={() => handlePageChange(page - 1)}
           disabled={page === 1}
         >
           Prev
         </Button>
-        
+
         {pages.map(p => (
           <Button
             key={p}
-            size="sm"
-            colorScheme={p === page ? 'brand' : undefined}
+            size="small"
+            variant={p === page ? "contained" : "outlined"}
             onClick={() => handlePageChange(p)}
           >
             {p}
           </Button>
         ))}
-        
+
         <Button
-          size="sm"
+          size="small"
+          variant="outlined"
           onClick={() => handlePageChange(page + 1)}
           disabled={page === totalPages}
         >
           Next
         </Button>
-        
+
         <Button
-          size="sm"
+          size="small"
+          variant="outlined"
           onClick={() => handlePageChange(totalPages)}
           disabled={page === totalPages}
         >
           Last
         </Button>
-      </HStack>
+      </Stack>
     );
   };
 
+  // Handle date filter change
+  const handleDateFilterChange = (event: SelectChangeEvent) => {
+    setDateFilter(event.target.value);
+  };
+
+  // Handle agent filter change
+  const handleAgentFilterChange = (event: SelectChangeEvent) => {
+    setAgentFilter(event.target.value);
+  };
+
   return (
-    <Box pt={5} pb={10}>
-      <Flex mb={6} justifyContent="space-between" alignItems="center">
-        <Heading size="lg">Logs & Monitoring</Heading>
-        <HStack spacing={4}>
+    <Box sx={{ pt: 5, pb: 10 }}>
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4" component="h1">Logs & Monitoring</Typography>
+        <Stack direction="row" spacing={2}>
           <Button
-            leftIcon={<FiRefreshCw />}
+            variant="outlined"
+            startIcon={<RefreshIcon />}
             onClick={() => {
               fetchQueryLogs();
               fetchSystemLogs();
@@ -256,420 +300,483 @@ const Logs: React.FC = () => {
             Refresh
           </Button>
           <Button
-            leftIcon={<FiDownload />}
-            colorScheme="brand"
+            variant="contained"
+            startIcon={<DownloadIcon />}
+            color="primary"
           >
             Export Logs
           </Button>
-        </HStack>
-      </Flex>
-      
-      <Tabs variant="soft-rounded" colorScheme="brand">
-        <TabList mb={4}>
-          <Tab>Query History</Tab>
-          <Tab>System Logs</Tab>
-          <Tab>Error Logs</Tab>
-        </TabList>
-        
-        <TabPanels>
-          {/* Query History Tab */}
-          <TabPanel p={0}>
-            <Card bg={cardBg} borderRadius="lg" boxShadow="md" mb={6}>
-              <CardHeader pb={2}>
-                <Flex direction={{ base: 'column', md: 'row' }} gap={4} justifyContent="space-between">
-                  <InputGroup maxW={{ base: 'full', md: '300px' }}>
-                    <InputLeftElement pointerEvents="none">
-                      <FiSearch color="gray.300" />
-                    </InputLeftElement>
-                    <Input
-                      placeholder="Search queries..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </InputGroup>
-                  
-                  <HStack spacing={4}>
-                    <Select
-                      placeholder="Filter by date"
-                      icon={<FiCalendar />}
-                      value={dateFilter}
-                      onChange={(e) => setDateFilter(e.target.value)}
-                      w={{ base: 'full', md: '200px' }}
-                    >
-                      <option value="all">All time</option>
-                      <option value="today">Today</option>
-                      <option value="yesterday">Yesterday</option>
-                      <option value="week">This week</option>
-                      <option value="month">This month</option>
-                    </Select>
-                    
-                    <Select
-                      placeholder="Filter by agent"
-                      icon={<FiFilter />}
-                      value={agentFilter}
-                      onChange={(e) => setAgentFilter(e.target.value)}
-                      w={{ base: 'full', md: '200px' }}
-                    >
-                      <option value="all">All agents</option>
-                      <option value="none">No agent</option>
-                      {/* Agent options would be dynamically populated */}
-                      <option value="GitHubSync">GitHubSync</option>
-                      <option value="SlackAgent">SlackAgent</option>
-                      <option value="JiraAgent">JiraAgent</option>
-                    </Select>
-                  </HStack>
-                </Flex>
-              </CardHeader>
-              <CardBody>
-                {isLoadingLogs ? (
-                  <Flex justify="center" p={8}>
-                    <Spinner size="xl" color="brand.500" />
-                  </Flex>
-                ) : logs.length === 0 ? (
-                  <Alert status="info" borderRadius="md">
-                    <AlertIcon />
-                    <Text>No query logs found. Try using the chat to generate some logs.</Text>
-                  </Alert>
-                ) : (
-                  <Box overflowX="auto">
-                    <Table variant="simple">
-                      <Thead>
-                        <Tr>
-                          <Th></Th>
-                          <Th>Timestamp</Th>
-                          <Th>Agent</Th>
-                          <Th>Query</Th>
-                          <Th>Response Time</Th>
-                          <Th>Actions</Th>
-                        </Tr>
-                      </Thead>
-                      <Tbody>
-                        {logs.map((log) => (
-                          <React.Fragment key={log.id}>
-                            <Tr>
-                              <Td p={0} width="40px">
+        </Stack>
+      </Box>
+
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          textColor="primary"
+          indicatorColor="primary"
+          variant="fullWidth"
+        >
+          <Tab label="Query History" {...a11yProps(0)} />
+          <Tab label="System Logs" {...a11yProps(1)} />
+          <Tab label="Error Logs" {...a11yProps(2)} />
+        </Tabs>
+      </Box>
+
+      <TabPanel value={tabValue} index={0}>
+        {/* Query History Tab */}
+        <Card elevation={2}>
+          <CardHeader
+            title="Query Logs"
+            action={
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                <TextField
+                  placeholder="Search queries..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  size="small"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ width: { xs: '100%', sm: 300 } }}
+                />
+
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel id="date-filter-label">Date</InputLabel>
+                  <Select
+                    labelId="date-filter-label"
+                    value={dateFilter}
+                    onChange={handleDateFilterChange}
+                    label="Date"
+                  >
+                    <MenuItem value="all">All time</MenuItem>
+                    <MenuItem value="today">Today</MenuItem>
+                    <MenuItem value="yesterday">Yesterday</MenuItem>
+                    <MenuItem value="week">This week</MenuItem>
+                    <MenuItem value="month">This month</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel id="agent-filter-label">Agent</InputLabel>
+                  <Select
+                    labelId="agent-filter-label"
+                    value={agentFilter}
+                    onChange={handleAgentFilterChange}
+                    label="Agent"
+                  >
+                    <MenuItem value="all">All agents</MenuItem>
+                    <MenuItem value="none">No agent</MenuItem>
+                    {/* Agent options would be dynamically populated */}
+                    <MenuItem value="GitHubSync">GitHubSync</MenuItem>
+                    <MenuItem value="SlackAgent">SlackAgent</MenuItem>
+                    <MenuItem value="JiraAgent">JiraAgent</MenuItem>
+                  </Select>
+                </FormControl>
+              </Stack>
+            }
+          />
+          <CardContent>
+            {isLoadingLogs ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : logs.length === 0 ? (
+              <Alert severity="info">
+                No query logs found. Try using the chat to generate some logs.
+              </Alert>
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell width="48px"></TableCell>
+                      <TableCell>Timestamp</TableCell>
+                      <TableCell>Agent</TableCell>
+                      <TableCell>Query</TableCell>
+                      <TableCell>Response Time</TableCell>
+                      <TableCell align="right">Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {logs.map((log) => (
+                      <React.Fragment key={log.id}>
+                        <TableRow
+                          hover
+                          sx={{
+                            '& > *': { borderBottom: 'unset' },
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <TableCell>
+                            <IconButton
+                              aria-label="expand row"
+                              size="small"
+                              onClick={() => toggleRowExpansion(log.id)}
+                            >
+                              {expandedRows[log.id] ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                            </IconButton>
+                          </TableCell>
+                          <TableCell>{formatTimestamp(log.timestamp)}</TableCell>
+                          <TableCell>
+                            {log.agent ? (
+                              <Chip
+                                label={log.agent}
+                                color="primary"
+                                size="small"
+                              />
+                            ) : (
+                              <Chip
+                                label="General"
+                                variant="outlined"
+                                size="small"
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Typography noWrap sx={{ maxWidth: 300 }}>
+                              {log.query}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={formatResponseTime(log.responseTime)}
+                              size="small"
+                              color="secondary"
+                              variant="outlined"
+                            />
+                          </TableCell>
+                          <TableCell align="right">
+                            <Stack direction="row" spacing={1} justifyContent="flex-end">
+                              <Tooltip title="View details">
                                 <IconButton
-                                  aria-label="Expand row"
-                                  icon={expandedRows[log.id] ? <FiChevronUp /> : <FiChevronDown />}
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => toggleRowExpansion(log.id)}
-                                />
-                              </Td>
-                              <Td whiteSpace="nowrap">{formatTimestamp(log.timestamp)}</Td>
-                              <Td>
-                                {log.agent ? (
-                                  <Badge colorScheme="brand">{log.agent}</Badge>
-                                ) : (
-                                  <Badge colorScheme="gray">General</Badge>
-                                )}
-                              </Td>
-                              <Td>
-                                <Text noOfLines={1} maxW="300px">
-                                  {log.query}
-                                </Text>
-                              </Td>
-                              <Td>
-                                <Badge>
-                                  {formatResponseTime(log.responseTime)}
-                                </Badge>
-                              </Td>
-                              <Td>
-                                <HStack spacing={2}>
-                                  <Tooltip label="View details">
-                                    <IconButton
-                                      aria-label="View details"
-                                      icon={<FiInfo />}
-                                      size="sm"
-                                      onClick={() => handleLogSelect(log)}
-                                    />
-                                  </Tooltip>
-                                  <Tooltip label="Copy query">
-                                    <IconButton
-                                      aria-label="Copy query"
-                                      icon={<FiCopy />}
-                                      size="sm"
-                                      onClick={() => navigator.clipboard.writeText(log.query)}
-                                    />
-                                  </Tooltip>
-                                  <Tooltip label="Retry query">
-                                    <IconButton
-                                      aria-label="Retry query"
-                                      icon={<FiSend />}
-                                      size="sm"
-                                      colorScheme="brand"
-                                    />
-                                  </Tooltip>
-                                </HStack>
-                              </Td>
-                            </Tr>
-                            <Tr>
-                              <Td colSpan={6} p={0}>
-                                <Collapse in={expandedRows[log.id]} animateOpacity>
-                                  <Box 
-                                    p={4} 
-                                    bg={useColorModeValue('gray.50', 'gray.700')}
-                                    borderBottomWidth="1px"
-                                  >
-                                    <VStack align="stretch" spacing={3}>
-                                      <Box>
-                                        <Text fontWeight="bold" mb={1}>Query:</Text>
-                                        <Code p={2} borderRadius="md" whiteSpace="pre-wrap">
-                                          {log.query}
-                                        </Code>
-                                      </Box>
-                                      <Box>
-                                        <Text fontWeight="bold" mb={1}>Response:</Text>
-                                        <Code p={2} borderRadius="md" whiteSpace="pre-wrap">
-                                          {log.response}
-                                        </Code>
-                                      </Box>
-                                    </VStack>
+                                  size="small"
+                                  onClick={() => handleLogSelect(log)}
+                                >
+                                  <InfoIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Copy query">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => navigator.clipboard.writeText(log.query)}
+                                >
+                                  <CopyIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Retry query">
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                >
+                                  <SendIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell colSpan={6} sx={{ py: 0 }}>
+                            <Collapse in={expandedRows[log.id]} timeout="auto" unmountOnExit>
+                              <Box sx={{ py: 2, px: 3, bgcolor: theme.palette.action.hover }}>
+                                <Stack spacing={2}>
+                                  <Box>
+                                    <Typography variant="subtitle2" gutterBottom>
+                                      Query:
+                                    </Typography>
+                                    <Paper
+                                      variant="outlined"
+                                      sx={{
+                                        p: 2,
+                                        fontFamily: 'monospace',
+                                        whiteSpace: 'pre-wrap',
+                                        bgcolor: theme.palette.background.paper
+                                      }}
+                                    >
+                                      {log.query}
+                                    </Paper>
                                   </Box>
-                                </Collapse>
-                              </Td>
-                            </Tr>
-                          </React.Fragment>
-                        ))}
-                      </Tbody>
-                    </Table>
-                    
-                    {/* Pagination */}
-                    <Flex justifyContent="center" mt={6}>
-                      {generatePaginationControls()}
-                    </Flex>
-                  </Box>
-                )}
-              </CardBody>
-            </Card>
-          </TabPanel>
-          
-          {/* System Logs Tab */}
-          <TabPanel p={0}>
-            <Card bg={cardBg} borderRadius="lg" boxShadow="md" mb={6}>
-              <CardHeader pb={2}>
-                <Flex justifyContent="space-between" alignItems="center">
-                  <Heading size="md">System Logs</Heading>
-                  <HStack>
-                    <Select
-                      placeholder="Log Level"
-                      w="150px"
-                      size="sm"
-                    >
-                      <option value="all">All Levels</option>
-                      <option value="info">Info</option>
-                      <option value="warn">Warning</option>
-                      <option value="error">Error</option>
-                      <option value="debug">Debug</option>
-                    </Select>
-                    <Button
-                      leftIcon={<FiRefreshCw />}
-                      size="sm"
-                      onClick={fetchSystemLogs}
-                      isLoading={isLoadingSystemLogs}
-                    >
-                      Refresh
-                    </Button>
-                  </HStack>
-                </Flex>
-              </CardHeader>
-              <CardBody>
-                {isLoadingSystemLogs ? (
-                  <Flex justify="center" p={8}>
-                    <Spinner size="xl" color="brand.500" />
-                  </Flex>
-                ) : systemLogs.length === 0 ? (
-                  <Alert status="info" borderRadius="md">
-                    <AlertIcon />
-                    <Text>No system logs found.</Text>
-                  </Alert>
-                ) : (
-                  <Box
-                    bg={useColorModeValue('gray.50', 'gray.900')}
-                    p={4}
-                    borderRadius="md"
-                    fontFamily="mono"
-                    fontSize="sm"
-                    overflowX="auto"
-                    maxH="600px"
-                    overflowY="auto"
-                  >
-                    {systemLogs.map((log, index) => {
-                      // Determine log level from content
-                      let color = 'gray.500';
-                      if (log.includes('INFO')) color = 'blue.500';
-                      if (log.includes('WARN')) color = 'orange.500';
-                      if (log.includes('ERROR')) color = 'red.500';
-                      if (log.includes('DEBUG')) color = 'green.500';
-                      
-                      return (
-                        <Text key={index} color={color} mb={1} whiteSpace="pre-wrap">
-                          {log}
-                        </Text>
-                      );
-                    })}
-                  </Box>
-                )}
-              </CardBody>
-            </Card>
-          </TabPanel>
-          
-          {/* Error Logs Tab */}
-          <TabPanel p={0}>
-            <Card bg={cardBg} borderRadius="lg" boxShadow="md" mb={6}>
-              <CardHeader pb={2}>
-                <Flex justifyContent="space-between" alignItems="center">
-                  <Heading size="md">Error Logs</Heading>
-                  <Button
-                    leftIcon={<FiRefreshCw />}
-                    size="sm"
-                    onClick={fetchErrorLogs}
-                    isLoading={isLoadingErrorLogs}
-                  >
-                    Refresh
-                  </Button>
-                </Flex>
-              </CardHeader>
-              <CardBody>
-                {isLoadingErrorLogs ? (
-                  <Flex justify="center" p={8}>
-                    <Spinner size="xl" color="brand.500" />
-                  </Flex>
-                ) : errorLogs.length === 0 ? (
-                  <Alert status="success" borderRadius="md">
-                    <AlertIcon />
-                    <Text>No error logs found. Everything is running smoothly!</Text>
-                  </Alert>
-                ) : (
-                  <Box
-                    bg={useColorModeValue('red.50', 'red.900')}
-                    p={4}
-                    borderRadius="md"
-                    fontFamily="mono"
-                    fontSize="sm"
-                    overflowX="auto"
-                    maxH="600px"
-                    overflowY="auto"
-                  >
-                    {errorLogs.map((log, index) => (
-                      <Text key={index} color="red.500" mb={1} whiteSpace="pre-wrap">
-                        {log}
-                      </Text>
+                                  <Box>
+                                    <Typography variant="subtitle2" gutterBottom>
+                                      Response:
+                                    </Typography>
+                                    <Paper
+                                      variant="outlined"
+                                      sx={{
+                                        p: 2,
+                                        fontFamily: 'monospace',
+                                        whiteSpace: 'pre-wrap',
+                                        bgcolor: theme.palette.background.paper,
+                                        maxHeight: 200,
+                                        overflow: 'auto'
+                                      }}
+                                    >
+                                      {log.response}
+                                    </Paper>
+                                  </Box>
+                                </Stack>
+                              </Box>
+                            </Collapse>
+                          </TableCell>
+                        </TableRow>
+                      </React.Fragment>
                     ))}
-                  </Box>
-                )}
-              </CardBody>
-            </Card>
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
-      
-      {/* Log Detail Modal */}
-      {selectedLog && (
-        <Modal isOpen={isOpen} onClose={onClose} size="xl">
-          <ModalOverlay />
-          <ModalContent>
-            <ModalHeader>Log Detail</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody>
-              <VStack align="stretch" spacing={4}>
-                <Box>
-                  <Flex justifyContent="space-between" mb={2}>
-                    <Heading size="sm">Timestamp</Heading>
-                    <Text>{formatTimestamp(selectedLog.timestamp)}</Text>
-                  </Flex>
-                  <Divider />
-                </Box>
-                
-                <Box>
-                  <Flex justifyContent="space-between" mb={2}>
-                    <Heading size="sm">Agent</Heading>
-                    <Badge colorScheme={selectedLog.agent ? 'brand' : 'gray'}>
-                      {selectedLog.agent || 'General'}
-                    </Badge>
-                  </Flex>
-                  <Divider />
-                </Box>
-                
-                <Box>
-                  <Flex justifyContent="space-between" mb={2}>
-                    <Heading size="sm">Response Time</Heading>
-                    <Badge colorScheme="green">
-                      {formatResponseTime(selectedLog.responseTime)}
-                    </Badge>
-                  </Flex>
-                  <Divider />
-                </Box>
-                
-                <Box>
-                  <Heading size="sm" mb={2}>Query</Heading>
-                  <Box
-                    bg={useColorModeValue('gray.50', 'gray.700')}
-                    p={3}
-                    borderRadius="md"
-                    mb={2}
+                  </TableBody>
+                </Table>
+
+                {/* Pagination */}
+                {generatePaginationControls()}
+              </TableContainer>
+            )}
+          </CardContent>
+        </Card>
+      </TabPanel>
+
+      <TabPanel value={tabValue} index={1}>
+        {/* System Logs Tab */}
+        <Card elevation={2}>
+          <CardHeader
+            title="System Logs"
+            action={
+              <Stack direction="row" spacing={2}>
+                <FormControl size="small" sx={{ width: 150 }}>
+                  <InputLabel id="log-level-label">Log Level</InputLabel>
+                  <Select
+                    labelId="log-level-label"
+                    defaultValue="all"
+                    label="Log Level"
                   >
-                    <Text whiteSpace="pre-wrap">{selectedLog.query}</Text>
-                  </Box>
-                  <Button
-                    leftIcon={<FiCopy />}
-                    size="sm"
-                    onClick={() => navigator.clipboard.writeText(selectedLog.query)}
-                  >
-                    Copy
-                  </Button>
-                </Box>
-                
-                <Box>
-                  <Heading size="sm" mb={2}>Response</Heading>
-                  <Box
-                    bg={useColorModeValue('gray.50', 'gray.700')}
-                    p={3}
-                    borderRadius="md"
-                    maxH="300px"
-                    overflowY="auto"
-                    mb={2}
-                  >
-                    <Text whiteSpace="pre-wrap">{selectedLog.response}</Text>
-                  </Box>
-                  <Button
-                    leftIcon={<FiCopy />}
-                    size="sm"
-                    onClick={() => navigator.clipboard.writeText(selectedLog.response)}
-                  >
-                    Copy
-                  </Button>
-                </Box>
-                
-                {selectedLog.context && (
-                  <Box>
-                    <Heading size="sm" mb={2}>Context</Heading>
-                    <Box
-                      bg={useColorModeValue('gray.50', 'gray.700')}
-                      p={3}
-                      borderRadius="md"
-                    >
-                      <pre>{JSON.stringify(selectedLog.context, null, 2)}</pre>
-                    </Box>
-                  </Box>
-                )}
-              </VStack>
-            </ModalBody>
-            <ModalFooter>
-              <Button
-                leftIcon={<FiSend />}
-                colorScheme="brand"
-                mr={3}
-                onClick={onClose}
+                    <MenuItem value="all">All Levels</MenuItem>
+                    <MenuItem value="info">Info</MenuItem>
+                    <MenuItem value="warn">Warning</MenuItem>
+                    <MenuItem value="error">Error</MenuItem>
+                    <MenuItem value="debug">Debug</MenuItem>
+                  </Select>
+                </FormControl>
+                <Button
+                  variant="outlined"
+                  startIcon={<RefreshIcon />}
+                  onClick={fetchSystemLogs}
+                  disabled={isLoadingSystemLogs}
+                >
+                  Refresh
+                </Button>
+              </Stack>
+            }
+          />
+          <CardContent>
+            {isLoadingSystemLogs ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : systemLogs.length === 0 ? (
+              <Alert severity="info">
+                No system logs found.
+              </Alert>
+            ) : (
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2,
+                  fontFamily: 'monospace',
+                  fontSize: '0.875rem',
+                  bgcolor: theme.palette.mode === 'light' ? 'grey.100' : 'grey.900',
+                  overflow: 'auto',
+                  maxHeight: 600,
+                }}
               >
-                Retry Query
+                {systemLogs.map((log, index) => {
+                  // Determine log level from content
+                  let color = theme.palette.text.secondary;
+                  if (log.includes('INFO')) color = theme.palette.info.main;
+                  if (log.includes('WARN')) color = theme.palette.warning.main;
+                  if (log.includes('ERROR')) color = theme.palette.error.main;
+                  if (log.includes('DEBUG')) color = theme.palette.success.main;
+
+                  return (
+                    <Typography key={index} color={color} sx={{ mb: 0.5, whiteSpace: 'pre-wrap' }}>
+                      {log}
+                    </Typography>
+                  );
+                })}
+              </Paper>
+            )}
+          </CardContent>
+        </Card>
+      </TabPanel>
+
+      <TabPanel value={tabValue} index={2}>
+        {/* Error Logs Tab */}
+        <Card elevation={2}>
+          <CardHeader
+            title="Error Logs"
+            action={
+              <Button
+                variant="outlined"
+                startIcon={<RefreshIcon />}
+                onClick={fetchErrorLogs}
+                disabled={isLoadingErrorLogs}
+              >
+                Refresh
               </Button>
-              <Button variant="ghost" onClick={onClose}>
-                Close
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
+            }
+          />
+          <CardContent>
+            {isLoadingErrorLogs ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : errorLogs.length === 0 ? (
+              <Alert severity="success">
+                No error logs found. Everything is running smoothly!
+              </Alert>
+            ) : (
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2,
+                  fontFamily: 'monospace',
+                  fontSize: '0.875rem',
+                  bgcolor: theme.palette.mode === 'light' ? 'rgba(244, 67, 54, 0.1)' : 'rgba(244, 67, 54, 0.2)',
+                  color: theme.palette.error.main,
+                  overflow: 'auto',
+                  maxHeight: 600,
+                }}
+              >
+                {errorLogs.map((log, index) => (
+                  <Typography key={index} sx={{ mb: 0.5, whiteSpace: 'pre-wrap' }}>
+                    {log}
+                  </Typography>
+                ))}
+              </Paper>
+            )}
+          </CardContent>
+        </Card>
+      </TabPanel>
+
+      {/* Log Detail Dialog */}
+      {selectedLog && (
+        <Dialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          fullWidth
+          maxWidth="md"
+        >
+          <DialogTitle>
+            Log Detail
+          </DialogTitle>
+          <DialogContent dividers>
+            <Stack spacing={3}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="subtitle1">Timestamp</Typography>
+                <Typography>{formatTimestamp(selectedLog.timestamp)}</Typography>
+              </Box>
+
+              <Divider />
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="subtitle1">Agent</Typography>
+                <Chip
+                  label={selectedLog.agent || 'General'}
+                  color={selectedLog.agent ? 'primary' : 'default'}
+                />
+              </Box>
+
+              <Divider />
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="subtitle1">Response Time</Typography>
+                <Chip
+                  label={formatResponseTime(selectedLog.responseTime)}
+                  color="success"
+                />
+              </Box>
+
+              <Divider />
+
+              <Box>
+                <Typography variant="subtitle1" gutterBottom>Query</Typography>
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    mb: 1,
+                    fontFamily: 'monospace',
+                    whiteSpace: 'pre-wrap',
+                    bgcolor: theme.palette.action.hover
+                  }}
+                >
+                  {selectedLog.query}
+                </Paper>
+                <Button
+                  startIcon={<CopyIcon />}
+                  size="small"
+                  onClick={() => navigator.clipboard.writeText(selectedLog.query)}
+                >
+                  Copy
+                </Button>
+              </Box>
+
+              <Box>
+                <Typography variant="subtitle1" gutterBottom>Response</Typography>
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    mb: 1,
+                    fontFamily: 'monospace',
+                    whiteSpace: 'pre-wrap',
+                    bgcolor: theme.palette.action.hover,
+                    maxHeight: 300,
+                    overflow: 'auto'
+                  }}
+                >
+                  {selectedLog.response}
+                </Paper>
+                <Button
+                  startIcon={<CopyIcon />}
+                  size="small"
+                  onClick={() => navigator.clipboard.writeText(selectedLog.response)}
+                >
+                  Copy
+                </Button>
+              </Box>
+
+              {selectedLog.context && (
+                <Box>
+                  <Typography variant="subtitle1" gutterBottom>Context</Typography>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 2,
+                      fontFamily: 'monospace',
+                      whiteSpace: 'pre-wrap',
+                      bgcolor: theme.palette.action.hover
+                    }}
+                  >
+                    <pre>{JSON.stringify(selectedLog.context, null, 2)}</pre>
+                  </Paper>
+                </Box>
+              )}
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              startIcon={<SendIcon />}
+              variant="contained"
+              color="primary"
+            >
+              Retry Query
+            </Button>
+            <Button onClick={() => setDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
       )}
     </Box>
   );

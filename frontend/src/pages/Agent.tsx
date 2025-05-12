@@ -5,92 +5,120 @@ import {
   Box,
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
+  CardActions,
   Divider,
-  Flex,
   Grid,
-  GridItem,
-  Heading,
-  HStack,
-  Icon,
+  Typography,
+  Stack,
   IconButton,
-  Tag,
-  TagLabel,
-  TagLeftIcon,
-  Text,
+  Chip,
   Tabs,
-  TabList,
-  TabPanels,
   Tab,
-  TabPanel,
-  VStack,
-  Badge,
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogContent,
-  AlertDialogOverlay,
-  useDisclosure,
-  Skeleton,
-  useToast,
-  useColorModeValue,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
-  FormControl,
-  FormLabel,
+  Paper,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  TextField,
   Switch,
-  Textarea,
+  FormControl,
+  FormControlLabel,
+  InputLabel,
   Select,
-} from '@chakra-ui/react';
+  MenuItem,
+  OutlinedInput,
+  Checkbox,
+  FormHelperText,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Skeleton,
+  Alert,
+  AlertTitle,
+  Collapse,
+  useTheme,
+  SelectChangeEvent
+} from '@mui/material';
 import {
-  FiEdit2,
-  FiTrash2,
-  FiMessageSquare,
-  FiTool,
-  FiClock,
-  FiActivity,
-  FiArrowLeft,
-  FiSettings,
-  FiCheckCircle,
-  FiXCircle,
-  FiAlertCircle,
-  FiInfo,
-} from 'react-icons/fi';
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Chat as ChatIcon,
+  Build as BuildIcon,
+  AccessTime as AccessTimeIcon,
+  Timeline as TimelineIcon,
+  ArrowBack as ArrowBackIcon,
+  Settings as SettingsIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon,
+  Info as InfoIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+} from '@mui/icons-material';
 import { useAppContext } from '../context/AppContext';
 import apiService, { Log } from '../services/api';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`agent-tabpanel-${index}`}
+      aria-labelledby={`agent-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ pt: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
+function a11yProps(index: number) {
+  return {
+    id: `agent-tab-${index}`,
+    'aria-controls': `agent-tabpanel-${index}`,
+  };
+}
 
 const Agent: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const toast = useToast();
-  const { 
-    agents, 
-    loadingAgents, 
-    fetchAgents, 
-    updateAgent, 
-    deleteAgent, 
-    tools 
+  const theme = useTheme();
+  const {
+    agents,
+    loadingAgents,
+    fetchAgents,
+    updateAgent,
+    deleteAgent,
+    tools
   } = useAppContext();
-  
+
   const [recentLogs, setRecentLogs] = useState<Log[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
-  
+
   // Agent state
   const [agent, setAgent] = useState<any>(null);
-  
+
   // Stats
   const [stats, setStats] = useState({
     totalQueries: 0,
@@ -98,38 +126,31 @@ const Agent: React.FC = () => {
     successRate: 0,
     lastActive: 'Never',
   });
-  
-  // Edit modal
-  const { 
-    isOpen: isEditModalOpen, 
-    onOpen: onOpenEditModal, 
-    onClose: onCloseEditModal 
-  } = useDisclosure();
-  
+
+  // Tab state
+  const [tabValue, setTabValue] = useState(0);
+
+  // Edit dialog
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
   // Delete confirmation dialog
-  const { 
-    isOpen: isDeleteDialogOpen, 
-    onOpen: onOpenDeleteDialog, 
-    onClose: onCloseDeleteDialog 
-  } = useDisclosure();
-  const cancelRef = React.useRef<HTMLButtonElement>(null);
-  
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  // Expanded state for tools
+  const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({});
+
   // Form state
   const [formData, setFormData] = useState<any>({
     description: '',
     enabled: true,
     tools: [],
   });
-  
-  // Styling
-  const cardBg = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  
+
   // Fetch agent on component mount
   useEffect(() => {
     fetchAgents();
   }, []);
-  
+
   // Set agent when agents are loaded
   useEffect(() => {
     if (!loadingAgents && agents.length > 0 && id) {
@@ -142,24 +163,17 @@ const Agent: React.FC = () => {
           tools: foundAgent.tools || [],
         });
       } else {
-        // Agent not found
-        toast({
-          title: 'Agent not found',
-          description: `No agent with the name "${id}" exists.`,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        });
+        // Agent not found, navigate back to agents page
         navigate('/agents');
       }
     }
-  }, [agents, loadingAgents, id]);
-  
+  }, [agents, loadingAgents, id, navigate]);
+
   // Fetch agent logs
   useEffect(() => {
     const fetchAgentLogs = async () => {
       if (!id) return;
-      
+
       setIsLoadingLogs(true);
       try {
         // This is a mock implementation - in a real app we would have a specific API endpoint
@@ -167,12 +181,12 @@ const Agent: React.FC = () => {
         // Filter logs for this agent
         const agentLogs = logsData.logs.filter(log => log.agent === id);
         setRecentLogs(agentLogs);
-        
+
         // Calculate stats
         if (agentLogs.length > 0) {
           const avgTime = agentLogs.reduce((acc, log) => acc + log.responseTime, 0) / agentLogs.length;
           const lastLog = agentLogs[0];
-          
+
           setStats({
             totalQueries: agentLogs.length,
             avgResponseTime: avgTime,
@@ -186,522 +200,549 @@ const Agent: React.FC = () => {
         setIsLoadingLogs(false);
       }
     };
-    
+
     if (agent) {
       fetchAgentLogs();
     }
   }, [agent, id]);
-  
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
+  // Toggle tool expansion
+  const toggleToolExpansion = (toolName: string) => {
+    setExpandedTools(prev => ({
+      ...prev,
+      [toolName]: !prev[toolName],
+    }));
+  };
+
   // Handle form input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
-  
+
   // Handle switch input changes
   const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
     setFormData({ ...formData, [name]: checked });
   };
-  
+
   // Handle multi-select for tools
-  const handleToolSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const options = Array.from(e.target.selectedOptions, option => option.value);
-    setFormData({ ...formData, tools: options });
+  const handleToolSelect = (event: SelectChangeEvent<string[]>) => {
+    const { value } = event.target;
+    setFormData({ ...formData, tools: typeof value === 'string' ? [value] : value });
   };
-  
+
   // Submit form
   const handleSubmit = async () => {
     if (!agent) return;
-    
+
     try {
       await updateAgent(agent.name, formData);
-      toast({
-        title: 'Agent updated',
-        description: `${agent.name} has been updated successfully.`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-      onCloseEditModal();
+      setEditDialogOpen(false);
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'An error occurred.',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+      console.error('Error updating agent:', error);
     }
   };
-  
+
   // Confirm delete
   const handleConfirmDelete = async () => {
     if (!agent) return;
-    
+
     try {
       await deleteAgent(agent.name);
-      toast({
-        title: 'Agent deleted',
-        description: `${agent.name} has been deleted successfully.`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
       navigate('/agents');
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'An error occurred.',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+      console.error('Error deleting agent:', error);
     }
-    onCloseDeleteDialog();
+    setDeleteDialogOpen(false);
   };
-  
+
   // Format response time
   const formatResponseTime = (responseTime: number) => {
     return (responseTime / 1000).toFixed(2) + 's';
   };
 
   return (
-    <Box pt={5} pb={10}>
-      <Flex mb={6} justifyContent="space-between" alignItems="center">
-        <HStack>
+    <Box sx={{ pt: 3, pb: 5 }}>
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        mb: 3
+      }}>
+        <Stack direction="row" spacing={1} alignItems="center">
           <IconButton
-            aria-label="Back to agents"
-            icon={<FiArrowLeft />}
-            variant="ghost"
-            as={RouterLink}
+            component={RouterLink}
             to="/agents"
-          />
-          <Heading size="lg">
-            {loadingAgents ? (
-              <Skeleton height="36px" width="200px" />
-            ) : (
-              agent?.name || 'Agent not found'
-            )}
-          </Heading>
-          {agent && (
-            <Badge 
-              colorScheme={agent.enabled ? 'green' : 'red'}
-              display="flex"
-              alignItems="center"
-              px={2}
-              py={1}
-              borderRadius="full"
-            >
-              <Icon as={agent.enabled ? FiCheckCircle : FiXCircle} mr={1} />
-              {agent.enabled ? 'Enabled' : 'Disabled'}
-            </Badge>
+            color="inherit"
+            size="small"
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          {loadingAgents ? (
+            <Skeleton width={200} height={40} />
+          ) : (
+            <Typography variant="h4" component="h1">
+              {agent?.name || 'Agent not found'}
+            </Typography>
           )}
-        </HStack>
-        
-        <HStack spacing={2}>
+          {agent && (
+            <Chip
+              icon={agent.enabled ? <CheckCircleIcon /> : <CancelIcon />}
+              label={agent.enabled ? 'Enabled' : 'Disabled'}
+              color={agent.enabled ? 'success' : 'error'}
+            />
+          )}
+        </Stack>
+
+        <Stack direction="row" spacing={1}>
           <Button
-            leftIcon={<FiEdit2 />}
-            onClick={onOpenEditModal}
-            isDisabled={!agent}
-            variant="outline"
+            startIcon={<EditIcon />}
+            onClick={() => setEditDialogOpen(true)}
+            disabled={!agent}
+            variant="outlined"
           >
             Edit
           </Button>
           <Button
-            leftIcon={<FiTrash2 />}
-            colorScheme="red"
-            onClick={onOpenDeleteDialog}
-            isDisabled={!agent}
-            variant="outline"
+            startIcon={<DeleteIcon />}
+            color="error"
+            onClick={() => setDeleteDialogOpen(true)}
+            disabled={!agent}
+            variant="outlined"
           >
             Delete
           </Button>
           <Button
-            leftIcon={<FiMessageSquare />}
-            colorScheme="brand"
-            as={RouterLink}
+            startIcon={<ChatIcon />}
+            color="primary"
+            component={RouterLink}
             to={`/chat?agent=${id}`}
-            isDisabled={!agent || !agent.enabled}
+            disabled={!agent || !agent.enabled}
+            variant="contained"
           >
             Chat
           </Button>
-        </HStack>
-      </Flex>
-      
+        </Stack>
+      </Box>
+
       {loadingAgents ? (
-        <VStack spacing={4} align="stretch">
-          <Skeleton height="100px" />
-          <Skeleton height="200px" />
-          <Skeleton height="300px" />
-        </VStack>
+        <Stack spacing={3}>
+          <Skeleton variant="rectangular" height={100} />
+          <Skeleton variant="rectangular" height={200} />
+          <Skeleton variant="rectangular" height={300} />
+        </Stack>
       ) : agent ? (
         <>
           {/* Agent Overview */}
-          <Grid templateColumns={{ base: '1fr', md: 'repeat(4, 1fr)' }} gap={6} mb={6}>
-            <GridItem colSpan={{ base: 1, md: 4 }}>
-              <Card bg={cardBg} borderRadius="lg" boxShadow="md">
-                <CardBody>
-                  <Text fontSize="lg">{agent.description}</Text>
-                </CardBody>
+          <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Grid item xs={12}>
+              <Card>
+                <CardContent>
+                  <Typography variant="body1">{agent.description}</Typography>
+                </CardContent>
               </Card>
-            </GridItem>
-            
+            </Grid>
+
             {/* Stats Cards */}
-            <GridItem colSpan={1}>
-              <Card bg={cardBg} borderRadius="lg" boxShadow="md" height="100%">
-                <CardBody>
-                  <VStack align="stretch">
-                    <HStack>
-                      <Icon as={FiMessageSquare} color="brand.500" />
-                      <Text fontWeight="medium">Total Queries</Text>
-                    </HStack>
-                    <Text fontSize="2xl" fontWeight="bold">
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ height: '100%', bgcolor: 'primary.light', color: 'primary.contrastText' }}>
+                <CardContent>
+                  <Stack spacing={1}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <ChatIcon sx={{ mr: 1 }} />
+                      <Typography variant="subtitle2">Total Queries</Typography>
+                    </Box>
+                    <Typography variant="h4" fontWeight="bold">
                       {stats.totalQueries}
-                    </Text>
-                  </VStack>
-                </CardBody>
+                    </Typography>
+                  </Stack>
+                </CardContent>
               </Card>
-            </GridItem>
-            
-            <GridItem colSpan={1}>
-              <Card bg={cardBg} borderRadius="lg" boxShadow="md" height="100%">
-                <CardBody>
-                  <VStack align="stretch">
-                    <HStack>
-                      <Icon as={FiClock} color="brand.500" />
-                      <Text fontWeight="medium">Avg Response Time</Text>
-                    </HStack>
-                    <Text fontSize="2xl" fontWeight="bold">
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ height: '100%', bgcolor: 'primary.light', color: 'primary.contrastText' }}>
+                <CardContent>
+                  <Stack spacing={1}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <AccessTimeIcon sx={{ mr: 1 }} />
+                      <Typography variant="subtitle2">Avg Response Time</Typography>
+                    </Box>
+                    <Typography variant="h4" fontWeight="bold">
                       {formatResponseTime(stats.avgResponseTime)}
-                    </Text>
-                  </VStack>
-                </CardBody>
+                    </Typography>
+                  </Stack>
+                </CardContent>
               </Card>
-            </GridItem>
-            
-            <GridItem colSpan={1}>
-              <Card bg={cardBg} borderRadius="lg" boxShadow="md" height="100%">
-                <CardBody>
-                  <VStack align="stretch">
-                    <HStack>
-                      <Icon as={FiCheckCircle} color="brand.500" />
-                      <Text fontWeight="medium">Success Rate</Text>
-                    </HStack>
-                    <Text fontSize="2xl" fontWeight="bold">
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ height: '100%', bgcolor: 'primary.light', color: 'primary.contrastText' }}>
+                <CardContent>
+                  <Stack spacing={1}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <CheckCircleIcon sx={{ mr: 1 }} />
+                      <Typography variant="subtitle2">Success Rate</Typography>
+                    </Box>
+                    <Typography variant="h4" fontWeight="bold">
                       {stats.successRate}%
-                    </Text>
-                  </VStack>
-                </CardBody>
+                    </Typography>
+                  </Stack>
+                </CardContent>
               </Card>
-            </GridItem>
-            
-            <GridItem colSpan={1}>
-              <Card bg={cardBg} borderRadius="lg" boxShadow="md" height="100%">
-                <CardBody>
-                  <VStack align="stretch">
-                    <HStack>
-                      <Icon as={FiActivity} color="brand.500" />
-                      <Text fontWeight="medium">Last Active</Text>
-                    </HStack>
-                    <Text fontSize="xl" fontWeight="bold" noOfLines={1}>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ height: '100%', bgcolor: 'primary.light', color: 'primary.contrastText' }}>
+                <CardContent>
+                  <Stack spacing={1}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <TimelineIcon sx={{ mr: 1 }} />
+                      <Typography variant="subtitle2">Last Active</Typography>
+                    </Box>
+                    <Typography variant="h5" fontWeight="bold" noWrap>
                       {stats.lastActive}
-                    </Text>
-                  </VStack>
-                </CardBody>
+                    </Typography>
+                  </Stack>
+                </CardContent>
               </Card>
-            </GridItem>
+            </Grid>
           </Grid>
-          
-          <Tabs variant="soft-rounded" colorScheme="brand">
-            <TabList mb={4}>
-              <Tab>Tools</Tab>
-              <Tab>Recent Activity</Tab>
-              <Tab>Settings</Tab>
-            </TabList>
-            
-            <TabPanels>
-              {/* Tools Tab */}
-              <TabPanel p={0}>
-                <Card bg={cardBg} borderRadius="lg" boxShadow="md" mb={6}>
-                  <CardHeader>
-                    <Heading size="md">Connected Tools</Heading>
-                  </CardHeader>
-                  <CardBody>
-                    {agent.tools && agent.tools.length > 0 ? (
-                      <VStack align="stretch" spacing={4}>
-                        {agent.tools.map((toolName: string) => {
-                          const tool = tools.find(t => t.name === toolName);
-                          return (
-                            <Card 
-                              key={toolName} 
-                              variant="outline" 
-                              p={4} 
-                              borderRadius="md"
-                              borderColor={borderColor}
-                            >
-                              <Flex justify="space-between" align="center">
-                                <HStack>
-                                  <Icon as={FiTool} color="brand.500" />
-                                  <VStack align="start" spacing={0}>
-                                    <Text fontWeight="bold">{toolName}</Text>
-                                    <Text fontSize="sm" color="gray.500">
-                                      {tool ? tool.description : 'Tool description not available'}
-                                    </Text>
-                                  </VStack>
-                                </HStack>
-                                <Badge colorScheme={tool?.enabled ? 'green' : 'red'}>
-                                  {tool?.enabled ? 'Active' : 'Inactive'}
-                                </Badge>
-                              </Flex>
-                            </Card>
-                          );
-                        })}
-                      </VStack>
-                    ) : (
-                      <Text>No tools connected to this agent.</Text>
-                    )}
-                  </CardBody>
-                </Card>
-              </TabPanel>
-              
-              {/* Recent Activity Tab */}
-              <TabPanel p={0}>
-                <Card bg={cardBg} borderRadius="lg" boxShadow="md" mb={6}>
-                  <CardHeader>
-                    <Flex justifyContent="space-between" alignItems="center">
-                      <Heading size="md">Recent Queries</Heading>
-                      <Button
-                        size="sm"
-                        rightIcon={<FiArrowLeft />}
-                        variant="ghost"
-                        as={RouterLink}
-                        to="/logs"
-                      >
-                        View All Logs
-                      </Button>
-                    </Flex>
-                  </CardHeader>
-                  <CardBody>
-                    {isLoadingLogs ? (
-                      <VStack spacing={4} align="stretch">
-                        <Skeleton height="50px" />
-                        <Skeleton height="50px" />
-                        <Skeleton height="50px" />
-                      </VStack>
-                    ) : recentLogs.length > 0 ? (
-                      <Table variant="simple">
-                        <Thead>
-                          <Tr>
-                            <Th>Timestamp</Th>
-                            <Th>Query</Th>
-                            <Th>Response Time</Th>
-                          </Tr>
-                        </Thead>
-                        <Tbody>
+
+          <Box sx={{ width: '100%' }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+              <Tabs
+                value={tabValue}
+                onChange={handleTabChange}
+                aria-label="agent tabs"
+                textColor="primary"
+                indicatorColor="primary"
+              >
+                <Tab label="Tools" {...a11yProps(0)} />
+                <Tab label="Recent Activity" {...a11yProps(1)} />
+                <Tab label="Settings" {...a11yProps(2)} />
+              </Tabs>
+            </Box>
+
+            {/* Tools Tab */}
+            <TabPanel value={tabValue} index={0}>
+              <Card>
+                <CardHeader title="Connected Tools" />
+                <CardContent>
+                  {agent.tools && agent.tools.length > 0 ? (
+                    <Stack spacing={2}>
+                      {agent.tools.map((toolName: string) => {
+                        const tool = tools.find(t => t.name === toolName);
+                        const isExpanded = expandedTools[toolName] || false;
+
+                        return (
+                          <Paper
+                            key={toolName}
+                            variant="outlined"
+                            sx={{ p: 2, borderRadius: 1 }}
+                          >
+                            <Box sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              mb: isExpanded ? 1 : 0
+                            }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <BuildIcon color="primary" sx={{ mr: 1 }} />
+                                <Box>
+                                  <Typography variant="subtitle1" fontWeight="bold">{toolName}</Typography>
+                                  {!isExpanded && tool && (
+                                    <Typography variant="body2" color="text.secondary" noWrap>
+                                      {tool.description}
+                                    </Typography>
+                                  )}
+                                </Box>
+                              </Box>
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Chip
+                                  label={tool?.enabled ? 'Active' : 'Inactive'}
+                                  color={tool?.enabled ? 'success' : 'error'}
+                                  size="small"
+                                  sx={{ mr: 1 }}
+                                />
+                                <IconButton
+                                  size="small"
+                                  onClick={() => toggleToolExpansion(toolName)}
+                                >
+                                  {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                                </IconButton>
+                              </Box>
+                            </Box>
+
+                            <Collapse in={isExpanded}>
+                              <Box sx={{ pt: 1 }}>
+                                <Typography variant="body2">
+                                  {tool ? tool.description : 'Tool description not available'}
+                                </Typography>
+                              </Box>
+                            </Collapse>
+                          </Paper>
+                        );
+                      })}
+                    </Stack>
+                  ) : (
+                    <Typography>No tools connected to this agent.</Typography>
+                  )}
+                </CardContent>
+              </Card>
+            </TabPanel>
+
+            {/* Recent Activity Tab */}
+            <TabPanel value={tabValue} index={1}>
+              <Card>
+                <CardHeader
+                  title="Recent Queries"
+                  action={
+                    <Button
+                      size="small"
+                      endIcon={<ArrowBackIcon />}
+                      component={RouterLink}
+                      to="/logs"
+                    >
+                      View All Logs
+                    </Button>
+                  }
+                />
+                <CardContent>
+                  {isLoadingLogs ? (
+                    <Stack spacing={2}>
+                      <Skeleton variant="rectangular" height={50} />
+                      <Skeleton variant="rectangular" height={50} />
+                      <Skeleton variant="rectangular" height={50} />
+                    </Stack>
+                  ) : recentLogs.length > 0 ? (
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Timestamp</TableCell>
+                            <TableCell>Query</TableCell>
+                            <TableCell>Response Time</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
                           {recentLogs.map((log) => (
-                            <Tr key={log.id}>
-                              <Td whiteSpace="nowrap">
-                                {new Date(log.timestamp).toLocaleString()}
-                              </Td>
-                              <Td>
-                                <Text noOfLines={1} maxW="300px">
+                            <TableRow key={log.id}>
+                              <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
+                              <TableCell>
+                                <Typography noWrap sx={{ maxWidth: 300 }}>
                                   {log.query}
-                                </Text>
-                              </Td>
-                              <Td>
-                                <Badge>
-                                  {formatResponseTime(log.responseTime)}
-                                </Badge>
-                              </Td>
-                            </Tr>
+                                </Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={formatResponseTime(log.responseTime)}
+                                  size="small"
+                                />
+                              </TableCell>
+                            </TableRow>
                           ))}
-                        </Tbody>
+                        </TableBody>
                       </Table>
-                    ) : (
-                      <Text>No recent activity for this agent.</Text>
-                    )}
-                  </CardBody>
-                </Card>
-              </TabPanel>
-              
-              {/* Settings Tab */}
-              <TabPanel p={0}>
-                <Card bg={cardBg} borderRadius="lg" boxShadow="md" mb={6}>
-                  <CardHeader>
-                    <Heading size="md">Agent Settings</Heading>
-                  </CardHeader>
-                  <CardBody>
-                    <VStack align="stretch" spacing={6}>
-                      <Flex 
-                        justify="space-between" 
-                        align="center"
-                        p={4}
-                        borderWidth="1px"
-                        borderRadius="md"
-                        borderColor={borderColor}
-                      >
-                        <HStack>
-                          <Icon as={agent.enabled ? FiCheckCircle : FiXCircle} />
-                          <Text fontWeight="medium">Status</Text>
-                        </HStack>
-                        <Badge colorScheme={agent.enabled ? 'green' : 'red'}>
-                          {agent.enabled ? 'Enabled' : 'Disabled'}
-                        </Badge>
-                      </Flex>
-                      
-                      <Flex 
-                        justify="space-between" 
-                        align="center"
-                        p={4}
-                        borderWidth="1px"
-                        borderRadius="md"
-                        borderColor={borderColor}
-                      >
-                        <HStack>
-                          <Icon as={FiClock} />
-                          <Text fontWeight="medium">Created</Text>
-                        </HStack>
-                        <Text>
-                          {agent.createdAt 
-                            ? new Date(agent.createdAt).toLocaleString() 
+                    </TableContainer>
+                  ) : (
+                    <Typography>No recent activity for this agent.</Typography>
+                  )}
+                </CardContent>
+              </Card>
+            </TabPanel>
+
+            {/* Settings Tab */}
+            <TabPanel value={tabValue} index={2}>
+              <Card>
+                <CardHeader title="Agent Settings" />
+                <CardContent>
+                  <Stack spacing={3}>
+                    <Paper
+                      variant="outlined"
+                      sx={{ p: 2, borderRadius: 1 }}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Box sx={{ mr: 1 }}>
+                            {agent.enabled ? <CheckCircleIcon color="success" /> : <CancelIcon color="error" />}
+                          </Box>
+                          <Typography fontWeight="medium">Status</Typography>
+                        </Box>
+                        <Chip
+                          label={agent.enabled ? 'Enabled' : 'Disabled'}
+                          color={agent.enabled ? 'success' : 'error'}
+                        />
+                      </Box>
+                    </Paper>
+
+                    <Paper
+                      variant="outlined"
+                      sx={{ p: 2, borderRadius: 1 }}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <AccessTimeIcon sx={{ mr: 1 }} />
+                          <Typography fontWeight="medium">Created</Typography>
+                        </Box>
+                        <Typography>
+                          {agent.createdAt
+                            ? new Date(agent.createdAt).toLocaleString()
                             : 'Not available'}
-                        </Text>
-                      </Flex>
-                      
-                      <Flex 
-                        justify="space-between" 
-                        align="center"
-                        p={4}
-                        borderWidth="1px"
-                        borderRadius="md"
-                        borderColor={borderColor}
-                      >
-                        <HStack>
-                          <Icon as={FiClock} />
-                          <Text fontWeight="medium">Last Updated</Text>
-                        </HStack>
-                        <Text>
-                          {agent.updatedAt 
-                            ? new Date(agent.updatedAt).toLocaleString() 
+                        </Typography>
+                      </Box>
+                    </Paper>
+
+                    <Paper
+                      variant="outlined"
+                      sx={{ p: 2, borderRadius: 1 }}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <AccessTimeIcon sx={{ mr: 1 }} />
+                          <Typography fontWeight="medium">Last Updated</Typography>
+                        </Box>
+                        <Typography>
+                          {agent.updatedAt
+                            ? new Date(agent.updatedAt).toLocaleString()
                             : 'Not available'}
-                        </Text>
-                      </Flex>
-                      
-                      <Button
-                        leftIcon={<FiEdit2 />}
-                        colorScheme="brand"
-                        onClick={onOpenEditModal}
-                      >
-                        Edit Agent Settings
-                      </Button>
-                    </VStack>
-                  </CardBody>
-                </Card>
-              </TabPanel>
-            </TabPanels>
-          </Tabs>
+                        </Typography>
+                      </Box>
+                    </Paper>
+
+                    <Button
+                      startIcon={<EditIcon />}
+                      variant="contained"
+                      color="primary"
+                      onClick={() => setEditDialogOpen(true)}
+                    >
+                      Edit Agent Settings
+                    </Button>
+                  </Stack>
+                </CardContent>
+              </Card>
+            </TabPanel>
+          </Box>
         </>
       ) : (
-        <Card bg={cardBg} p={6} textAlign="center">
-          <Icon as={FiAlertCircle} boxSize={10} color="red.500" mb={4} />
-          <Heading size="md" mb={2}>Agent Not Found</Heading>
-          <Text mb={4}>The agent you're looking for doesn't exist or has been deleted.</Text>
+        <Card sx={{ p: 4, textAlign: 'center' }}>
+          <InfoIcon color="error" sx={{ fontSize: 48, mb: 2 }} />
+          <Typography variant="h5" gutterBottom>Agent Not Found</Typography>
+          <Typography sx={{ mb: 3 }}>
+            The agent you're looking for doesn't exist or has been deleted.
+          </Typography>
           <Button
-            as={RouterLink}
+            component={RouterLink}
             to="/agents"
-            colorScheme="brand"
-            leftIcon={<FiArrowLeft />}
+            variant="contained"
+            startIcon={<ArrowBackIcon />}
           >
             Back to Agents
           </Button>
         </Card>
       )}
-      
-      {/* Edit Agent Modal */}
-      <Modal isOpen={isEditModalOpen} onClose={onCloseEditModal} size="lg">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Edit Agent: {agent?.name}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4} align="stretch">
-              <FormControl isRequired>
-                <FormLabel>Description</FormLabel>
-                <Textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Describe what this agent does"
-                  rows={3}
-                />
-              </FormControl>
-              
-              <FormControl>
-                <FormLabel>Enabled</FormLabel>
-                <Switch 
-                  name="enabled"
-                  isChecked={formData.enabled}
-                  onChange={handleSwitchChange}
-                />
-              </FormControl>
-              
-              <FormControl>
-                <FormLabel>Tools</FormLabel>
-                <Select 
-                  multiple
-                  size="sm"
-                  height="120px"
-                  onChange={handleToolSelect}
-                  value={formData.tools || []}
-                >
-                  {tools.filter(tool => tool.enabled).map((tool) => (
-                    <option key={tool.name} value={tool.name}>
-                      {tool.name} - {tool.description}
-                    </option>
-                  ))}
-                </Select>
-              </FormControl>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onCloseEditModal}>
-              Cancel
-            </Button>
-            <Button colorScheme="brand" onClick={handleSubmit}>
-              Save Changes
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-      
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog
-        isOpen={isDeleteDialogOpen}
-        leastDestructiveRef={cancelRef}
-        onClose={onCloseDeleteDialog}
+
+      {/* Edit Agent Dialog */}
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
       >
-        <AlertDialogOverlay>
-          <AlertDialogContent>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Delete Agent
-            </AlertDialogHeader>
+        <DialogTitle>Edit Agent: {agent?.name}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} sx={{ mt: 1 }}>
+            <TextField
+              label="Description"
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder="Describe what this agent does"
+              multiline
+              rows={3}
+              fullWidth
+              required
+              InputLabelProps={{ shrink: true }}
+            />
 
-            <AlertDialogBody>
-              Are you sure you want to delete {agent?.name}? This action cannot be undone.
-            </AlertDialogBody>
+            <FormControlLabel
+              control={
+                <Switch
+                  name="enabled"
+                  checked={formData.enabled}
+                  onChange={handleSwitchChange}
+                  color="primary"
+                />
+              }
+              label="Enabled"
+            />
 
-            <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={onCloseDeleteDialog}>
-                Cancel
-              </Button>
-              <Button colorScheme="red" onClick={handleConfirmDelete} ml={3}>
-                Delete
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
+            <FormControl fullWidth>
+              <InputLabel id="edit-tools-select-label">Tools</InputLabel>
+              <Select
+                labelId="edit-tools-select-label"
+                id="edit-tools-select"
+                multiple
+                value={formData.tools || []}
+                onChange={handleToolSelect}
+                input={<OutlinedInput label="Tools" />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selected.map((value: string) => (
+                      <Chip key={value} label={value} size="small" />
+                    ))}
+                  </Box>
+                )}
+              >
+                {tools.filter(tool => tool.enabled).map((tool) => (
+                  <MenuItem key={tool.name} value={tool.name}>
+                    <Checkbox checked={formData.tools?.indexOf(tool.name) > -1} />
+                    <ListItemText
+                      primary={tool.name}
+                      secondary={tool.description}
+                      secondaryTypographyProps={{ noWrap: true }}
+                    />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} variant="contained" color="primary">
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Delete Agent</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete {agent?.name}? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmDelete} color="error">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

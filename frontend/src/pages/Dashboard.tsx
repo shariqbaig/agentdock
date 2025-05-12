@@ -3,42 +3,38 @@ import React, { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
-  Flex,
   Grid,
-  GridItem,
-  Heading,
-  Text,
-  Stat,
-  StatLabel,
-  StatNumber,
-  StatHelpText,
-  StatArrow,
+  Typography,
   Card,
+  CardContent,
   CardHeader,
-  CardBody,
-  CardFooter,
+  CardActions,
   Button,
-  Badge,
-  useColorModeValue,
-  SimpleGrid,
-  Icon,
-  HStack,
-  VStack,
-  Divider,
+  Chip,
   List,
   ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  Paper,
   Link,
-} from '@chakra-ui/react';
-import { 
-  FiUsers, 
-  FiTool, 
-  FiAlertCircle, 
-  FiCheckCircle, 
-  FiMessageSquare,
-  FiClock,
-  FiActivity,
-  FiServer
-} from 'react-icons/fi';
+  Stack,
+  Alert,
+  AlertTitle,
+} from '@mui/material';
+import {
+  People as PeopleIcon,
+  Build as BuildIcon,
+  Warning as WarningIcon,
+  CheckCircle as CheckCircleIcon,
+  Chat as ChatIcon,
+  AccessTime as AccessTimeIcon,
+  Timeline as TimelineIcon,
+  Storage as StorageIcon,
+  ArrowUpward as ArrowUpwardIcon,
+  ArrowDownward as ArrowDownwardIcon,
+} from '@mui/icons-material';
 import { useAppContext } from '../context/AppContext';
 import apiService, { Log } from '../services/api';
 
@@ -55,11 +51,6 @@ const Dashboard: React.FC = () => {
     avgResponseTime: 0,
   });
 
-  // Card background and border colors
-  const cardBg = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const statCardBg = useColorModeValue('brand.50', 'gray.700');
-  
   // Fetch dashboard data
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -68,7 +59,7 @@ const Dashboard: React.FC = () => {
         // Get recent logs
         const logsData = await apiService.getLogs(1, 5);
         setRecentLogs(logsData.logs);
-        
+
         // Calculate statistics
         setStats({
           totalAgents: agents.length,
@@ -76,8 +67,8 @@ const Dashboard: React.FC = () => {
           totalTools: tools.length,
           enabledTools: tools.filter(tool => tool.enabled).length,
           totalQueries: logsData.pagination.total,
-          avgResponseTime: logsData.logs.length > 0 
-            ? logsData.logs.reduce((acc, log) => acc + log.responseTime, 0) / logsData.logs.length 
+          avgResponseTime: logsData.logs.length > 0
+            ? logsData.logs.reduce((acc, log) => acc + log.responseTime, 0) / logsData.logs.length
             : 0,
         });
       } catch (error) {
@@ -86,274 +77,282 @@ const Dashboard: React.FC = () => {
         setIsLoading(false);
       }
     };
-    
+
     if (isOnline) {
       fetchDashboardData();
     }
   }, [isOnline, agents, tools]);
 
+  // Format response time
+  const formatResponseTime = (responseTime: number) => {
+    return (responseTime / 1000).toFixed(2) + 's';
+  };
+
   return (
-    <Box pt={5} pb={10}>
-      <Flex mb={6} justifyContent="space-between" alignItems="center">
-        <Heading size="lg">Dashboard</Heading>
-        <HStack spacing={4}>
-          <Badge colorScheme={isOnline ? 'green' : 'red'} fontSize="sm" p={2} borderRadius="md">
-            <HStack spacing={2}>
-              <Icon as={isOnline ? FiCheckCircle : FiAlertCircle} />
-              <Text>Server {serverStatus}</Text>
-            </HStack>
-          </Badge>
+    <Box sx={{ pt: 3, pb: 5 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" component="h1">Dashboard</Typography>
+        <Stack direction="row" spacing={2}>
+          <Chip
+            icon={isOnline ? <CheckCircleIcon /> : <WarningIcon />}
+            label={`Server ${serverStatus}`}
+            color={isOnline ? "success" : "error"}
+            variant="outlined"
+          />
           <Button
-            as={RouterLink}
+            component={RouterLink}
             to="/chat"
-            colorScheme="brand"
-            leftIcon={<FiMessageSquare />}
+            variant="contained"
+            startIcon={<ChatIcon />}
           >
             Chat
           </Button>
-        </HStack>
-      </Flex>
+        </Stack>
+      </Box>
 
       {/* Stats Overview */}
-      <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} spacing={6} mb={6}>
-        <Card bg={statCardBg} borderRadius="lg" boxShadow="md">
-          <CardBody>
-            <Stat>
-              <StatLabel>Agents</StatLabel>
-              <HStack align="center" mt={2}>
-                <Icon as={FiUsers} boxSize={5} />
-                <StatNumber>{stats.activeAgents} / {stats.totalAgents}</StatNumber>
-              </HStack>
-              <StatHelpText>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ bgcolor: 'primary.light', color: 'primary.contrastText' }} elevation={2}>
+            <CardContent>
+              <Typography variant="subtitle2" gutterBottom>Agents</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                <PeopleIcon sx={{ mr: 1 }} />
+                <Typography variant="h4">{stats.activeAgents} / {stats.totalAgents}</Typography>
+              </Box>
+              <Typography variant="body2" sx={{ mt: 1 }}>
                 {stats.activeAgents} active agents
-              </StatHelpText>
-            </Stat>
-          </CardBody>
-        </Card>
-        
-        <Card bg={statCardBg} borderRadius="lg" boxShadow="md">
-          <CardBody>
-            <Stat>
-              <StatLabel>Tools</StatLabel>
-              <HStack align="center" mt={2}>
-                <Icon as={FiTool} boxSize={5} />
-                <StatNumber>{stats.enabledTools} / {stats.totalTools}</StatNumber>
-              </HStack>
-              <StatHelpText>
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ bgcolor: 'primary.light', color: 'primary.contrastText' }} elevation={2}>
+            <CardContent>
+              <Typography variant="subtitle2" gutterBottom>Tools</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                <BuildIcon sx={{ mr: 1 }} />
+                <Typography variant="h4">{stats.enabledTools} / {stats.totalTools}</Typography>
+              </Box>
+              <Typography variant="body2" sx={{ mt: 1 }}>
                 {stats.enabledTools} enabled tools
-              </StatHelpText>
-            </Stat>
-          </CardBody>
-        </Card>
-        
-        <Card bg={statCardBg} borderRadius="lg" boxShadow="md">
-          <CardBody>
-            <Stat>
-              <StatLabel>Total Queries</StatLabel>
-              <HStack align="center" mt={2}>
-                <Icon as={FiMessageSquare} boxSize={5} />
-                <StatNumber>{stats.totalQueries}</StatNumber>
-              </HStack>
-              <StatHelpText>
-                <StatArrow type='increase' />
-                23% from last week
-              </StatHelpText>
-            </Stat>
-          </CardBody>
-        </Card>
-        
-        <Card bg={statCardBg} borderRadius="lg" boxShadow="md">
-          <CardBody>
-            <Stat>
-              <StatLabel>Avg Response Time</StatLabel>
-              <HStack align="center" mt={2}>
-                <Icon as={FiClock} boxSize={5} />
-                <StatNumber>{(stats.avgResponseTime / 1000).toFixed(2)}s</StatNumber>
-              </HStack>
-              <StatHelpText>
-                <StatArrow type='decrease' />
-                10% from last week
-              </StatHelpText>
-            </Stat>
-          </CardBody>
-        </Card>
-      </SimpleGrid>
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ bgcolor: 'primary.light', color: 'primary.contrastText' }} elevation={2}>
+            <CardContent>
+              <Typography variant="subtitle2" gutterBottom>Total Queries</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                <ChatIcon sx={{ mr: 1 }} />
+                <Typography variant="h4">{stats.totalQueries}</Typography>
+              </Box>
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                  <ArrowUpwardIcon fontSize="small" sx={{ mr: 0.5 }} />
+                  23% from last week
+                </Box>
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ bgcolor: 'primary.light', color: 'primary.contrastText' }} elevation={2}>
+            <CardContent>
+              <Typography variant="subtitle2" gutterBottom>Avg Response Time</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                <AccessTimeIcon sx={{ mr: 1 }} />
+                <Typography variant="h4">{formatResponseTime(stats.avgResponseTime)}</Typography>
+              </Box>
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                  <ArrowDownwardIcon fontSize="small" sx={{ mr: 0.5 }} />
+                  10% from last week
+                </Box>
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
       {/* Main content grid */}
-      <Grid
-        templateColumns={{ base: "1fr", lg: "3fr 1fr" }}
-        gap={6}
-      >
+      <Grid container spacing={3}>
         {/* Left Column - Recent Queries */}
-        <GridItem>
-          <Card mb={6} bg={cardBg} boxShadow="md" borderRadius="lg">
-            <CardHeader>
-              <Heading size="md">Recent Queries</Heading>
-            </CardHeader>
-            <CardBody>
+        <Grid item xs={12} lg={8}>
+          <Card elevation={2}>
+            <CardHeader title="Recent Queries" />
+            <CardContent>
               {recentLogs.length > 0 ? (
-                <VStack align="stretch" spacing={4}>
+                <Stack spacing={2}>
                   {recentLogs.map((log) => (
-                    <Box 
+                    <Paper
                       key={log.id}
-                      p={4}
-                      borderWidth="1px"
-                      borderRadius="md"
-                      borderColor={borderColor}
+                      variant="outlined"
+                      sx={{ p: 2 }}
                     >
-                      <Flex justifyContent="space-between" mb={2}>
-                        <HStack>
-                          <Icon as={FiMessageSquare} color="brand.500" />
-                          <Text fontWeight="medium">{log.agent || 'General Query'}</Text>
-                        </HStack>
-                        <HStack>
-                          <Icon as={FiClock} color="gray.500" />
-                          <Text fontSize="sm" color="gray.500">
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <ChatIcon color="primary" sx={{ mr: 1 }} />
+                          <Typography variant="subtitle2">{log.agent || 'General Query'}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <AccessTimeIcon fontSize="small" sx={{ mr: 0.5, color: 'text.secondary' }} />
+                          <Typography variant="caption" color="text.secondary">
                             {new Date(log.timestamp).toLocaleString()}
-                          </Text>
-                        </HStack>
-                      </Flex>
-                      <Text fontWeight="bold" mb={2} noOfLines={1}>
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Typography variant="subtitle1" fontWeight="bold" noWrap sx={{ mb: 1 }}>
                         {log.query}
-                      </Text>
-                      <Text noOfLines={2} mb={2}>
+                      </Typography>
+                      <Typography variant="body2" noWrap sx={{ mb: 1 }}>
                         {log.response}
-                      </Text>
-                      <Flex justifyContent="space-between" alignItems="center">
-                        <Badge colorScheme="brand" borderRadius="full" px={2}>
-                          {(log.responseTime / 1000).toFixed(2)}s
-                        </Badge>
+                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Chip
+                          label={formatResponseTime(log.responseTime)}
+                          color="primary"
+                          size="small"
+                        />
                         <Button
-                          as={RouterLink}
+                          component={RouterLink}
                           to={`/logs#${log.id}`}
-                          size="sm"
-                          variant="ghost"
+                          size="small"
+                          color="primary"
                         >
                           View Details
                         </Button>
-                      </Flex>
-                    </Box>
+                      </Box>
+                    </Paper>
                   ))}
-                </VStack>
+                </Stack>
               ) : (
-                <Box textAlign="center" py={10}>
-                  <Text>No queries yet. Try asking something!</Text>
+                <Box sx={{ textAlign: 'center', py: 5 }}>
+                  <Typography>No queries yet. Try asking something!</Typography>
                 </Box>
               )}
-            </CardBody>
-            <CardFooter>
+            </CardContent>
+            <CardActions sx={{ justifyContent: 'flex-end' }}>
               <Button
-                as={RouterLink}
+                component={RouterLink}
                 to="/logs"
-                variant="ghost"
-                colorScheme="brand"
-                size="sm"
-                ml="auto"
+                color="primary"
+                size="small"
               >
                 View All Logs
               </Button>
-            </CardFooter>
+            </CardActions>
           </Card>
-        </GridItem>
+        </Grid>
 
         {/* Right Column - System Status & Quick Actions */}
-        <GridItem>
+        <Grid item xs={12} lg={4}>
           {/* System Status */}
-          <Card mb={6} bg={cardBg} boxShadow="md" borderRadius="lg">
-            <CardHeader>
-              <Heading size="md">System Status</Heading>
-            </CardHeader>
-            <CardBody>
-              <VStack align="stretch" spacing={4}>
-                <HStack justify="space-between">
-                  <HStack>
-                    <Icon as={FiServer} />
-                    <Text>MCP Server</Text>
-                  </HStack>
-                  <Badge colorScheme={isOnline ? 'green' : 'red'}>
-                    {isOnline ? 'Running' : 'Offline'}
-                  </Badge>
-                </HStack>
-                
-                <HStack justify="space-between">
-                  <HStack>
-                    <Icon as={FiActivity} />
-                    <Text>API Service</Text>
-                  </HStack>
-                  <Badge colorScheme={isOnline ? 'green' : 'red'}>
-                    {isOnline ? 'Running' : 'Offline'}
-                  </Badge>
-                </HStack>
-                
-                <Divider />
-                
-                <HStack justify="space-between">
-                  <Text>GitHub Integration</Text>
-                  <Badge colorScheme={tools.some(t => t.category === 'github' && t.enabled) ? 'green' : 'red'}>
-                    {tools.some(t => t.category === 'github' && t.enabled) ? 'Enabled' : 'Disabled'}
-                  </Badge>
-                </HStack>
-                
-                <HStack justify="space-between">
-                  <Text>Slack Integration</Text>
-                  <Badge colorScheme={tools.some(t => t.category === 'slack' && t.enabled) ? 'green' : 'red'}>
-                    {tools.some(t => t.category === 'slack' && t.enabled) ? 'Enabled' : 'Disabled'}
-                  </Badge>
-                </HStack>
-                
-                <HStack justify="space-between">
-                  <Text>Jira Integration</Text>
-                  <Badge colorScheme={tools.some(t => t.category === 'jira' && t.enabled) ? 'green' : 'red'}>
-                    {tools.some(t => t.category === 'jira' && t.enabled) ? 'Enabled' : 'Disabled'}
-                  </Badge>
-                </HStack>
-              </VStack>
-            </CardBody>
+          <Card sx={{ mb: 3 }} elevation={2}>
+            <CardHeader title="System Status" />
+            <CardContent>
+              <List dense disablePadding>
+                <ListItem sx={{ px: 0 }}>
+                  <ListItemIcon sx={{ minWidth: 36 }}>
+                    <StorageIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="MCP Server" />
+                  <Chip
+                    label={isOnline ? "Running" : "Offline"}
+                    color={isOnline ? "success" : "error"}
+                    size="small"
+                  />
+                </ListItem>
+
+                <ListItem sx={{ px: 0 }}>
+                  <ListItemIcon sx={{ minWidth: 36 }}>
+                    <TimelineIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="API Service" />
+                  <Chip
+                    label={isOnline ? "Running" : "Offline"}
+                    color={isOnline ? "success" : "error"}
+                    size="small"
+                  />
+                </ListItem>
+
+                <Divider sx={{ my: 1.5 }} />
+
+                <ListItem sx={{ px: 0 }}>
+                  <ListItemText primary="GitHub Integration" />
+                  <Chip
+                    label={tools.some(t => t.category === 'github' && t.enabled) ? "Enabled" : "Disabled"}
+                    color={tools.some(t => t.category === 'github' && t.enabled) ? "success" : "error"}
+                    size="small"
+                  />
+                </ListItem>
+
+                <ListItem sx={{ px: 0 }}>
+                  <ListItemText primary="Slack Integration" />
+                  <Chip
+                    label={tools.some(t => t.category === 'slack' && t.enabled) ? "Enabled" : "Disabled"}
+                    color={tools.some(t => t.category === 'slack' && t.enabled) ? "success" : "error"}
+                    size="small"
+                  />
+                </ListItem>
+
+                <ListItem sx={{ px: 0 }}>
+                  <ListItemText primary="Jira Integration" />
+                  <Chip
+                    label={tools.some(t => t.category === 'jira' && t.enabled) ? "Enabled" : "Disabled"}
+                    color={tools.some(t => t.category === 'jira' && t.enabled) ? "success" : "error"}
+                    size="small"
+                  />
+                </ListItem>
+              </List>
+            </CardContent>
           </Card>
 
           {/* Quick Actions */}
-          <Card bg={cardBg} boxShadow="md" borderRadius="lg">
-            <CardHeader>
-              <Heading size="md">Quick Actions</Heading>
-            </CardHeader>
-            <CardBody>
-              <List spacing={3}>
-                <ListItem>
-                  <Link as={RouterLink} to="/agents" color="brand.500">
-                    <HStack>
-                      <Icon as={FiUsers} />
-                      <Text>Manage Agents</Text>
-                    </HStack>
-                  </Link>
+          <Card elevation={2}>
+            <CardHeader title="Quick Actions" />
+            <CardContent>
+              <List>
+                <ListItem disablePadding>
+                  <ListItemButton component={RouterLink} to="/agents">
+                    <ListItemIcon>
+                      <PeopleIcon color="primary" />
+                    </ListItemIcon>
+                    <ListItemText primary="Manage Agents" />
+                  </ListItemButton>
                 </ListItem>
-                <ListItem>
-                  <Link as={RouterLink} to="/tools" color="brand.500">
-                    <HStack>
-                      <Icon as={FiTool} />
-                      <Text>Configure Tools</Text>
-                    </HStack>
-                  </Link>
+                <ListItem disablePadding>
+                  <ListItemButton component={RouterLink} to="/tools">
+                    <ListItemIcon>
+                      <BuildIcon color="primary" />
+                    </ListItemIcon>
+                    <ListItemText primary="Configure Tools" />
+                  </ListItemButton>
                 </ListItem>
-                <ListItem>
-                  <Link as={RouterLink} to="/logs" color="brand.500">
-                    <HStack>
-                      <Icon as={FiActivity} />
-                      <Text>View Logs</Text>
-                    </HStack>
-                  </Link>
+                <ListItem disablePadding>
+                  <ListItemButton component={RouterLink} to="/logs">
+                    <ListItemIcon>
+                      <TimelineIcon color="primary" />
+                    </ListItemIcon>
+                    <ListItemText primary="View Logs" />
+                  </ListItemButton>
                 </ListItem>
-                <ListItem>
-                  <Link as={RouterLink} to="/settings" color="brand.500">
-                    <HStack>
-                      <Icon as={FiServer} />
-                      <Text>System Settings</Text>
-                    </HStack>
-                  </Link>
+                <ListItem disablePadding>
+                  <ListItemButton component={RouterLink} to="/settings">
+                    <ListItemIcon>
+                      <StorageIcon color="primary" />
+                    </ListItemIcon>
+                    <ListItemText primary="System Settings" />
+                  </ListItemButton>
                 </ListItem>
               </List>
-            </CardBody>
+            </CardContent>
           </Card>
-        </GridItem>
+        </Grid>
       </Grid>
     </Box>
   );

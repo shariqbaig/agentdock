@@ -4,456 +4,550 @@ import {
   Box,
   Button,
   Card,
-  CardBody,
+  CardContent,
   CardHeader,
+  CardActions,
   Divider,
-  Flex,
+  Typography,
   FormControl,
+  FormControlLabel,
   FormHelperText,
-  FormLabel,
-  Heading,
+  InputLabel,
   Input,
-  InputGroup,
-  InputRightElement,
-  Select,
-  SimpleGrid,
+  InputAdornment,
+  IconButton,
   Switch,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
+  Select,
+  MenuItem,
+  Grid,
   Tabs,
-  Text,
-  VStack,
-  useColorMode,
-  useColorModeValue,
-  useToast
-} from '@chakra-ui/react';
-import { FiSave, FiRefreshCw, FiEye, FiEyeOff, FiInfo } from 'react-icons/fi';
+  Tab,
+  Paper,
+  Alert,
+  useTheme,
+  SelectChangeEvent,
+} from '@mui/material';
+import {
+  Save as SaveIcon,
+  Refresh as RefreshIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
+  Info as InfoIcon,
+} from '@mui/icons-material';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`settings-tabpanel-${index}`}
+      aria-labelledby={`settings-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ pt: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
+function a11yProps(index: number) {
+  return {
+    id: `settings-tab-${index}`,
+    'aria-controls': `settings-tabpanel-${index}`,
+  };
+}
 
 const Settings: React.FC = () => {
-  const toast = useToast();
-  const { colorMode, toggleColorMode } = useColorMode();
-  
+  const theme = useTheme();
+
+  // Tab state
+  const [tabValue, setTabValue] = useState(0);
+
   // Server settings
   const [port, setPort] = useState<string>('3001');
   const [logLevel, setLogLevel] = useState<string>('info');
-  
+
   // LLM settings
   const [groqApiKey, setGroqApiKey] = useState<string>('');
   const [groqModel, setGroqModel] = useState<string>('llama-3.1-8b-instant');
   const [showGroqApiKey, setShowGroqApiKey] = useState<boolean>(false);
-  
+
   // Docker settings
   const [enableDockerRegistry, setEnableDockerRegistry] = useState<boolean>(false);
   const [dockerRegistryUrl, setDockerRegistryUrl] = useState<string>('');
   const [dockerUsername, setDockerUsername] = useState<string>('');
   const [dockerPassword, setDockerPassword] = useState<string>('');
   const [showDockerPassword, setShowDockerPassword] = useState<boolean>(false);
-  
+
   // UI settings
-  const [theme, setTheme] = useState<string>(colorMode);
+  const [themeMode, setThemeMode] = useState<string>(theme.palette.mode);
   const [language, setLanguage] = useState<string>('en');
   const [enableNotifications, setEnableNotifications] = useState<boolean>(true);
-  
-  const cardBg = useColorModeValue('white', 'gray.800');
-  
+
+  // Handle tab change
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
+  // Handle select changes
+  const handleLogLevelChange = (event: SelectChangeEvent) => {
+    setLogLevel(event.target.value);
+  };
+
+  const handleGroqModelChange = (event: SelectChangeEvent) => {
+    setGroqModel(event.target.value);
+  };
+
+  const handleThemeChange = (event: SelectChangeEvent) => {
+    setThemeMode(event.target.value);
+  };
+
+  const handleLanguageChange = (event: SelectChangeEvent) => {
+    setLanguage(event.target.value);
+  };
+
+  // Toggle password visibility
+  const toggleGroqApiKeyVisibility = () => {
+    setShowGroqApiKey(!showGroqApiKey);
+  };
+
+  const toggleDockerPasswordVisibility = () => {
+    setShowDockerPassword(!showDockerPassword);
+  };
+
   // Save settings
   const saveServerSettings = () => {
-    toast({
-      title: 'Server settings saved',
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
+    console.log('Server settings saved');
+    // Toast notification would be handled by the UI framework
   };
-  
+
   const saveLLMSettings = () => {
-    toast({
-      title: 'LLM settings saved',
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
+    console.log('LLM settings saved');
+    // Toast notification would be handled by the UI framework
   };
-  
+
   const saveDockerSettings = () => {
-    toast({
-      title: 'Docker settings saved',
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
+    console.log('Docker settings saved');
+    // Toast notification would be handled by the UI framework
   };
-  
+
   const saveUISettings = () => {
-    // Apply theme change
-    if (theme !== colorMode) {
-      toggleColorMode();
-    }
-    
-    toast({
-      title: 'UI settings saved',
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
+    console.log('UI settings saved');
+    // Theme change would be handled by the theme context
+    // Toast notification would be handled by the UI framework
   };
 
   return (
-    <Box pt={5} pb={10}>
-      <Flex mb={6} justifyContent="space-between" alignItems="center">
-        <Heading size="lg">Settings</Heading>
-      </Flex>
-      
-      <Tabs variant="soft-rounded" colorScheme="brand">
-        <TabList mb={4}>
-          <Tab>Server</Tab>
-          <Tab>LLM</Tab>
-          <Tab>Docker</Tab>
-          <Tab>UI</Tab>
-        </TabList>
-        
-        <TabPanels>
-          {/* Server Settings */}
-          <TabPanel p={0}>
-            <Card bg={cardBg} borderRadius="lg" boxShadow="md" mb={6}>
-              <CardHeader>
-                <Heading size="md">Server Configuration</Heading>
-              </CardHeader>
-              <CardBody>
-                <VStack spacing={6} align="stretch">
-                  <FormControl>
-                    <FormLabel>Server Port</FormLabel>
+    <Box sx={{ pt: 5, pb: 10 }}>
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4" component="h1">Settings</Typography>
+      </Box>
+
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          textColor="primary"
+          indicatorColor="primary"
+          aria-label="settings tabs"
+        >
+          <Tab label="Server" {...a11yProps(0)} />
+          <Tab label="LLM" {...a11yProps(1)} />
+          <Tab label="Docker" {...a11yProps(2)} />
+          <Tab label="UI" {...a11yProps(3)} />
+        </Tabs>
+      </Box>
+
+      <TabPanel value={tabValue} index={0}>
+        {/* Server Settings */}
+        <Card elevation={2}>
+          <CardHeader title="Server Configuration" />
+          <CardContent>
+            <Box component="form" sx={{ '& > :not(style)': { mb: 3 } }}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel htmlFor="server-port">Server Port</InputLabel>
+                <Input
+                  id="server-port"
+                  type="number"
+                  value={port}
+                  onChange={(e) => setPort(e.target.value)}
+                  aria-describedby="server-port-helper-text"
+                />
+                <FormHelperText id="server-port-helper-text">
+                  The port on which the API server will run. Default: 3001
+                </FormHelperText>
+              </FormControl>
+
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="log-level-label">Log Level</InputLabel>
+                <Select
+                  labelId="log-level-label"
+                  id="log-level"
+                  value={logLevel}
+                  onChange={handleLogLevelChange}
+                  label="Log Level"
+                >
+                  <MenuItem value="error">Error</MenuItem>
+                  <MenuItem value="warn">Warning</MenuItem>
+                  <MenuItem value="info">Info</MenuItem>
+                  <MenuItem value="debug">Debug</MenuItem>
+                </Select>
+                <FormHelperText>
+                  Determines which logs are recorded. Debug is most verbose.
+                </FormHelperText>
+              </FormControl>
+
+              <Divider sx={{ my: 2 }} />
+
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="log-retention-label">Log Retention Period</InputLabel>
+                <Select
+                  labelId="log-retention-label"
+                  id="log-retention"
+                  defaultValue="30"
+                  label="Log Retention Period"
+                >
+                  <MenuItem value="7">7 days</MenuItem>
+                  <MenuItem value="14">14 days</MenuItem>
+                  <MenuItem value="30">30 days</MenuItem>
+                  <MenuItem value="90">90 days</MenuItem>
+                  <MenuItem value="180">180 days</MenuItem>
+                  <MenuItem value="365">365 days</MenuItem>
+                </Select>
+                <FormHelperText>
+                  How long to keep logs before automatic deletion.
+                </FormHelperText>
+              </FormControl>
+
+              <FormControlLabel
+                control={<Switch defaultChecked color="primary" />}
+                label="Auto-restart on Crash"
+              />
+            </Box>
+          </CardContent>
+          <CardActions>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<SaveIcon />}
+              onClick={saveServerSettings}
+            >
+              Save Server Settings
+            </Button>
+          </CardActions>
+        </Card>
+      </TabPanel>
+
+      <TabPanel value={tabValue} index={1}>
+        {/* LLM Settings */}
+        <Card elevation={2}>
+          <CardHeader title="LLM Configuration" />
+          <CardContent>
+            <Box component="form" sx={{ '& > :not(style)': { mb: 3 } }}>
+              <FormControl fullWidth variant="outlined" required>
+                <InputLabel htmlFor="groq-api-key">Groq API Key</InputLabel>
+                <Input
+                  id="groq-api-key"
+                  type={showGroqApiKey ? 'text' : 'password'}
+                  value={groqApiKey}
+                  onChange={(e) => setGroqApiKey(e.target.value)}
+                  placeholder="Enter your Groq API key"
+                  endAdornment={
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle api key visibility"
+                        onClick={toggleGroqApiKeyVisibility}
+                        edge="end"
+                      >
+                        {showGroqApiKey ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  }
+                />
+                <FormHelperText>
+                  You can get a Groq API key from your Groq account.
+                </FormHelperText>
+              </FormControl>
+
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="groq-model-label">Groq Model</InputLabel>
+                <Select
+                  labelId="groq-model-label"
+                  id="groq-model"
+                  value={groqModel}
+                  onChange={handleGroqModelChange}
+                  label="Groq Model"
+                >
+                  <MenuItem value="llama-3.1-8b-instant">Llama 3.1 8B (Instant)</MenuItem>
+                  <MenuItem value="llama-3.1-70b-versatile">Llama 3.1 70B (Versatile)</MenuItem>
+                  <MenuItem value="mixtral-8x7b-32768">Mixtral 8x7B</MenuItem>
+                  <MenuItem value="gemma-7b-it">Gemma 7B</MenuItem>
+                </Select>
+                <FormHelperText>
+                  Select the model you want to use for natural language processing.
+                </FormHelperText>
+              </FormControl>
+
+              <Divider sx={{ my: 2 }} />
+
+              <FormControl fullWidth variant="outlined">
+                <InputLabel htmlFor="temperature">Temperature</InputLabel>
+                <Input
+                  id="temperature"
+                  type="number"
+                  defaultValue="0.7"
+                  inputProps={{
+                    step: 0.1,
+                    min: 0,
+                    max: 1,
+                  }}
+
+                />
+                <FormHelperText>
+                  Controls randomness. Lower values are more deterministic.
+                </FormHelperText>
+              </FormControl>
+
+              <FormControl fullWidth variant="outlined">
+                <InputLabel htmlFor="max-tokens">Max Tokens</InputLabel>
+                <Input
+                  id="max-tokens"
+                  type="number"
+                  defaultValue="2048"
+                  inputProps={{
+                    min: 1,
+                    max: 4096,
+                  }}
+
+                />
+                <FormHelperText>
+                  Maximum number of tokens to generate.
+                </FormHelperText>
+              </FormControl>
+            </Box>
+          </CardContent>
+          <CardActions>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<SaveIcon />}
+              onClick={saveLLMSettings}
+            >
+              Save LLM Settings
+            </Button>
+          </CardActions>
+        </Card>
+      </TabPanel>
+
+      <TabPanel value={tabValue} index={2}>
+        {/* Docker Settings */}
+        <Card elevation={2}>
+          <CardHeader title="Docker Configuration" />
+          <CardContent>
+            <Box component="form" sx={{ '& > :not(style)': { mb: 3 } }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={enableDockerRegistry}
+                    onChange={(e) => setEnableDockerRegistry(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label="Enable Private Docker Registry"
+              />
+
+              <FormControl fullWidth variant="outlined" disabled={!enableDockerRegistry}>
+                <InputLabel htmlFor="docker-registry-url">Registry URL</InputLabel>
+                <Input
+                  id="docker-registry-url"
+                  value={dockerRegistryUrl}
+                  onChange={(e) => setDockerRegistryUrl(e.target.value)}
+                  placeholder="e.g., docker.io, registry.gitlab.com"
+
+                />
+              </FormControl>
+
+              <FormControl fullWidth variant="outlined" disabled={!enableDockerRegistry}>
+                <InputLabel htmlFor="docker-username">Username</InputLabel>
+                <Input
+                  id="docker-username"
+                  value={dockerUsername}
+                  onChange={(e) => setDockerUsername(e.target.value)}
+                  placeholder="Enter registry username"
+
+                />
+              </FormControl>
+
+              <FormControl fullWidth variant="outlined" disabled={!enableDockerRegistry}>
+                <InputLabel htmlFor="docker-password">Password</InputLabel>
+                <Input
+                  id="docker-password"
+                  type={showDockerPassword ? 'text' : 'password'}
+                  value={dockerPassword}
+                  onChange={(e) => setDockerPassword(e.target.value)}
+                  placeholder="Enter registry password"
+                  endAdornment={
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={toggleDockerPasswordVisibility}
+                        edge="end"
+                        disabled={!enableDockerRegistry}
+                      >
+                        {showDockerPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  }
+
+                />
+              </FormControl>
+
+              <Divider sx={{ my: 2 }} />
+
+              <Typography variant="subtitle1" gutterBottom>Resource Limits</Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel htmlFor="cpu-limit">CPU Limit</InputLabel>
                     <Input
-                      type="number"
-                      value={port}
-                      onChange={(e) => setPort(e.target.value)}
+                      id="cpu-limit"
+                      defaultValue="1.0"
+
                     />
-                    <FormHelperText>
-                      The port on which the API server will run. Default: 3001
-                    </FormHelperText>
                   </FormControl>
-                  
-                  <FormControl>
-                    <FormLabel>Log Level</FormLabel>
-                    <Select
-                      value={logLevel}
-                      onChange={(e) => setLogLevel(e.target.value)}
-                    >
-                      <option value="error">Error</option>
-                      <option value="warn">Warning</option>
-                      <option value="info">Info</option>
-                      <option value="debug">Debug</option>
-                    </Select>
-                    <FormHelperText>
-                      Determines which logs are recorded. Debug is most verbose.
-                    </FormHelperText>
-                  </FormControl>
-                  
-                  <Divider />
-                  
-                  <FormControl>
-                    <FormLabel>Log Retention Period</FormLabel>
-                    <Select defaultValue="30">
-                      <option value="7">7 days</option>
-                      <option value="14">14 days</option>
-                      <option value="30">30 days</option>
-                      <option value="90">90 days</option>
-                      <option value="180">180 days</option>
-                      <option value="365">365 days</option>
-                    </Select>
-                    <FormHelperText>
-                      How long to keep logs before automatic deletion.
-                    </FormHelperText>
-                  </FormControl>
-                  
-                  <FormControl display="flex" alignItems="center">
-                    <FormLabel htmlFor="auto-restart" mb="0">
-                      Auto-restart on Crash
-                    </FormLabel>
-                    <Switch id="auto-restart" defaultChecked />
-                  </FormControl>
-                  
-                  <Button
-                    leftIcon={<FiSave />}
-                    colorScheme="brand"
-                    onClick={saveServerSettings}
-                    alignSelf="flex-start"
-                  >
-                    Save Server Settings
-                  </Button>
-                </VStack>
-              </CardBody>
-            </Card>
-          </TabPanel>
-          
-          {/* LLM Settings */}
-          <TabPanel p={0}>
-            <Card bg={cardBg} borderRadius="lg" boxShadow="md" mb={6}>
-              <CardHeader>
-                <Heading size="md">LLM Configuration</Heading>
-              </CardHeader>
-              <CardBody>
-                <VStack spacing={6} align="stretch">
-                  <FormControl isRequired>
-                    <FormLabel>Groq API Key</FormLabel>
-                    <InputGroup>
-                      <Input
-                        type={showGroqApiKey ? "text" : "password"}
-                        value={groqApiKey}
-                        onChange={(e) => setGroqApiKey(e.target.value)}
-                        placeholder="Enter your Groq API key"
-                      />
-                      <InputRightElement width="4.5rem">
-                        <Button
-                          h="1.75rem"
-                          size="sm"
-                          onClick={() => setShowGroqApiKey(!showGroqApiKey)}
-                        >
-                          {showGroqApiKey ? <FiEyeOff /> : <FiEye />}
-                        </Button>
-                      </InputRightElement>
-                    </InputGroup>
-                    <FormHelperText>
-                      You can get a Groq API key from your Groq account.
-                    </FormHelperText>
-                  </FormControl>
-                  
-                  <FormControl>
-                    <FormLabel>Groq Model</FormLabel>
-                    <Select
-                      value={groqModel}
-                      onChange={(e) => setGroqModel(e.target.value)}
-                    >
-                      <option value="llama-3.1-8b-instant">Llama 3.1 8B (Instant)</option>
-                      <option value="llama-3.1-70b-versatile">Llama 3.1 70B (Versatile)</option>
-                      <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
-                      <option value="gemma-7b-it">Gemma 7B</option>
-                    </Select>
-                    <FormHelperText>
-                      Select the model you want to use for natural language processing.
-                    </FormHelperText>
-                  </FormControl>
-                  
-                  <Divider />
-                  
-                  <FormControl>
-                    <FormLabel>Temperature</FormLabel>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel htmlFor="memory-limit">Memory Limit</InputLabel>
                     <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="1"
-                      defaultValue="0.7"
-                    />
-                    <FormHelperText>
-                      Controls randomness. Lower values are more deterministic.
-                    </FormHelperText>
-                  </FormControl>
-                  
-                  <FormControl>
-                    <FormLabel>Max Tokens</FormLabel>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="4096"
-                      defaultValue="2048"
-                    />
-                    <FormHelperText>
-                      Maximum number of tokens to generate.
-                    </FormHelperText>
-                  </FormControl>
-                  
-                  <Button
-                    leftIcon={<FiSave />}
-                    colorScheme="brand"
-                    onClick={saveLLMSettings}
-                    alignSelf="flex-start"
-                  >
-                    Save LLM Settings
-                  </Button>
-                </VStack>
-              </CardBody>
-            </Card>
-          </TabPanel>
-          
-          {/* Docker Settings */}
-          <TabPanel p={0}>
-            <Card bg={cardBg} borderRadius="lg" boxShadow="md" mb={6}>
-              <CardHeader>
-                <Heading size="md">Docker Configuration</Heading>
-              </CardHeader>
-              <CardBody>
-                <VStack spacing={6} align="stretch">
-                  <FormControl display="flex" alignItems="center">
-                    <FormLabel htmlFor="enable-docker-registry" mb="0">
-                      Enable Private Docker Registry
-                    </FormLabel>
-                    <Switch
-                      id="enable-docker-registry"
-                      isChecked={enableDockerRegistry}
-                      onChange={(e) => setEnableDockerRegistry(e.target.checked)}
+                      id="memory-limit"
+                      defaultValue="2Gi"
+
                     />
                   </FormControl>
-                  
-                  <FormControl isDisabled={!enableDockerRegistry}>
-                    <FormLabel>Registry URL</FormLabel>
-                    <Input
-                      value={dockerRegistryUrl}
-                      onChange={(e) => setDockerRegistryUrl(e.target.value)}
-                      placeholder="e.g., docker.io, registry.gitlab.com"
-                    />
-                  </FormControl>
-                  
-                  <FormControl isDisabled={!enableDockerRegistry}>
-                    <FormLabel>Username</FormLabel>
-                    <Input
-                      value={dockerUsername}
-                      onChange={(e) => setDockerUsername(e.target.value)}
-                      placeholder="Enter registry username"
-                    />
-                  </FormControl>
-                  
-                  <FormControl isDisabled={!enableDockerRegistry}>
-                    <FormLabel>Password</FormLabel>
-                    <InputGroup>
-                      <Input
-                        type={showDockerPassword ? "text" : "password"}
-                        value={dockerPassword}
-                        onChange={(e) => setDockerPassword(e.target.value)}
-                        placeholder="Enter registry password"
-                      />
-                      <InputRightElement width="4.5rem">
-                        <Button
-                          h="1.75rem"
-                          size="sm"
-                          onClick={() => setShowDockerPassword(!showDockerPassword)}
-                        >
-                          {showDockerPassword ? <FiEyeOff /> : <FiEye />}
-                        </Button>
-                      </InputRightElement>
-                    </InputGroup>
-                  </FormControl>
-                  
-                  <Divider />
-                  
-                  <FormControl>
-                    <FormLabel>Resource Limits</FormLabel>
-                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                      <Box>
-                        <Text mb={2}>CPU Limit</Text>
-                        <Input defaultValue="1.0" />
-                      </Box>
-                      <Box>
-                        <Text mb={2}>Memory Limit</Text>
-                        <Input defaultValue="2Gi" />
-                      </Box>
-                    </SimpleGrid>
-                    <FormHelperText>
-                      Resource limits for the Docker containers.
-                    </FormHelperText>
-                  </FormControl>
-                  
-                  <Button
-                    leftIcon={<FiSave />}
-                    colorScheme="brand"
-                    onClick={saveDockerSettings}
-                    alignSelf="flex-start"
-                  >
-                    Save Docker Settings
-                  </Button>
-                </VStack>
-              </CardBody>
-            </Card>
-          </TabPanel>
-          
-          {/* UI Settings */}
-          <TabPanel p={0}>
-            <Card bg={cardBg} borderRadius="lg" boxShadow="md" mb={6}>
-              <CardHeader>
-                <Heading size="md">UI Configuration</Heading>
-              </CardHeader>
-              <CardBody>
-                <VStack spacing={6} align="stretch">
-                  <FormControl>
-                    <FormLabel>Theme</FormLabel>
-                    <Select
-                      value={theme}
-                      onChange={(e) => setTheme(e.target.value)}
-                    >
-                      <option value="light">Light</option>
-                      <option value="dark">Dark</option>
-                    </Select>
-                    <FormHelperText>
-                      Choose the UI theme for the application.
-                    </FormHelperText>
-                  </FormControl>
-                  
-                  <FormControl>
-                    <FormLabel>Language</FormLabel>
-                    <Select
-                      value={language}
-                      onChange={(e) => setLanguage(e.target.value)}
-                    >
-                      <option value="en">English</option>
-                      <option value="es">Spanish</option>
-                      <option value="fr">French</option>
-                      <option value="de">German</option>
-                      <option value="zh">Chinese</option>
-                    </Select>
-                    <FormHelperText>
-                      Choose the display language for the application.
-                    </FormHelperText>
-                  </FormControl>
-                  
-                  <Divider />
-                  
-                  <FormControl display="flex" alignItems="center">
-                    <FormLabel htmlFor="enable-notifications" mb="0">
-                      Enable Notifications
-                    </FormLabel>
-                    <Switch
-                      id="enable-notifications"
-                      isChecked={enableNotifications}
-                      onChange={(e) => setEnableNotifications(e.target.checked)}
-                    />
-                  </FormControl>
-                  
-                  <FormControl display="flex" alignItems="center">
-                    <FormLabel htmlFor="auto-refresh" mb="0">
-                      Auto-refresh Logs
-                    </FormLabel>
-                    <Switch id="auto-refresh" defaultChecked />
-                  </FormControl>
-                  
-                  <FormControl>
-                    <FormLabel>Items Per Page</FormLabel>
-                    <Select defaultValue="20">
-                      <option value="10">10</option>
-                      <option value="20">20</option>
-                      <option value="50">50</option>
-                      <option value="100">100</option>
-                    </Select>
-                    <FormHelperText>
-                      Number of items to display on paginated tables.
-                    </FormHelperText>
-                  </FormControl>
-                  
-                  <Button
-                    leftIcon={<FiSave />}
-                    colorScheme="brand"
-                    onClick={saveUISettings}
-                    alignSelf="flex-start"
-                  >
-                    Save UI Settings
-                  </Button>
-                </VStack>
-              </CardBody>
-            </Card>
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
+                </Grid>
+              </Grid>
+              <FormHelperText>
+                Resource limits for the Docker containers.
+              </FormHelperText>
+            </Box>
+          </CardContent>
+          <CardActions>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<SaveIcon />}
+              onClick={saveDockerSettings}
+            >
+              Save Docker Settings
+            </Button>
+          </CardActions>
+        </Card>
+      </TabPanel>
+
+      <TabPanel value={tabValue} index={3}>
+        {/* UI Settings */}
+        <Card elevation={2}>
+          <CardHeader title="UI Configuration" />
+          <CardContent>
+            <Box component="form" sx={{ '& > :not(style)': { mb: 3 } }}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="theme-mode-label">Theme</InputLabel>
+                <Select
+                  labelId="theme-mode-label"
+                  id="theme-mode"
+                  value={themeMode}
+                  onChange={handleThemeChange}
+                  label="Theme"
+                >
+                  <MenuItem value="light">Light</MenuItem>
+                  <MenuItem value="dark">Dark</MenuItem>
+                </Select>
+                <FormHelperText>
+                  Choose the UI theme for the application.
+                </FormHelperText>
+              </FormControl>
+
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="language-label">Language</InputLabel>
+                <Select
+                  labelId="language-label"
+                  id="language"
+                  value={language}
+                  onChange={handleLanguageChange}
+                  label="Language"
+                >
+                  <MenuItem value="en">English</MenuItem>
+                  <MenuItem value="es">Spanish</MenuItem>
+                  <MenuItem value="fr">French</MenuItem>
+                  <MenuItem value="de">German</MenuItem>
+                  <MenuItem value="zh">Chinese</MenuItem>
+                </Select>
+                <FormHelperText>
+                  Choose the display language for the application.
+                </FormHelperText>
+              </FormControl>
+
+              <Divider sx={{ my: 2 }} />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={enableNotifications}
+                    onChange={(e) => setEnableNotifications(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label="Enable Notifications"
+              />
+
+              <FormControlLabel
+                control={<Switch defaultChecked color="primary" />}
+                label="Auto-refresh Logs"
+              />
+
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="items-per-page-label">Items Per Page</InputLabel>
+                <Select
+                  labelId="items-per-page-label"
+                  id="items-per-page"
+                  defaultValue="20"
+                  label="Items Per Page"
+                >
+                  <MenuItem value="10">10</MenuItem>
+                  <MenuItem value="20">20</MenuItem>
+                  <MenuItem value="50">50</MenuItem>
+                  <MenuItem value="100">100</MenuItem>
+                </Select>
+                <FormHelperText>
+                  Number of items to display on paginated tables.
+                </FormHelperText>
+              </FormControl>
+            </Box>
+          </CardContent>
+          <CardActions>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<SaveIcon />}
+              onClick={saveUISettings}
+            >
+              Save UI Settings
+            </Button>
+          </CardActions>
+        </Card>
+      </TabPanel>
     </Box>
   );
 };
