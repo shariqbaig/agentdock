@@ -74,7 +74,7 @@ const Layout: React.FC<LayoutProps> = () => {
             overflowX: 'hidden',
             bgcolor: theme.palette.background.default,
             height: 'calc(100vh - 64px)',
-            mt: '64px',
+            mt: '20px',
           }}
         >
           <Box

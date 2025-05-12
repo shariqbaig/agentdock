@@ -23,7 +23,6 @@ interface AppContextType {
   // Status
   isOnline: boolean;
   serverStatus: string;
-  checkServerStatus: () => Promise<void>;
 }
 
 const defaultContext: AppContextType = {
@@ -44,7 +43,6 @@ const defaultContext: AppContextType = {
   
   isOnline: false,
   serverStatus: 'offline',
-  checkServerStatus: async () => {},
 };
 
 export const AppContext = createContext<AppContextType>(defaultContext);
@@ -69,16 +67,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   // Server status
   const [isOnline, setIsOnline] = useState<boolean>(false);
   const [serverStatus, setServerStatus] = useState<string>('checking');
-  
-  // Check server status on mount
-  useEffect(() => {
-    checkServerStatus();
-    
-    // Set up interval to check server status
-    const interval = setInterval(checkServerStatus, 30000); // Check every 30 seconds
-    
-    return () => clearInterval(interval);
-  }, []);
   
   // Fetch initial data
   useEffect(() => {
@@ -169,20 +157,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   };
   
-  // Server status check
-  const checkServerStatus = async () => {
-    try {
-      setServerStatus('checking');
-      const response = await apiService.healthCheck();
-      setIsOnline(response.status === 'ok');
-      setServerStatus(response.status === 'ok' ? 'online' : 'offline');
-    } catch (error) {
-      console.error('Error checking server status:', error);
-      setIsOnline(false);
-      setServerStatus('offline');
-    }
-  };
-  
   // Context value
   const contextValue: AppContextType = {
     agents,
@@ -201,8 +175,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     fetchToolCategories,
     
     isOnline,
-    serverStatus,
-    checkServerStatus,
+    serverStatus
   };
   
   return (

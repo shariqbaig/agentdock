@@ -165,12 +165,6 @@ class ApiService {
     const response: AxiosResponse<QueryResponse> = await this.api.post('/query', request);
     return response.data;
   }
-
-  // Health check
-  async healthCheck(): Promise<{ status: string }> {
-    const response: AxiosResponse<{ status: string }> = await this.api.get('/health');
-    return response.data;
-  }
 }
 
 // Export a singleton instance

@@ -9,7 +9,6 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
-  IconButton,
   Divider,
 } from '@mui/material';
 import {
@@ -18,7 +17,6 @@ import {
   Build as BuildIcon,
   Assessment as AssessmentIcon,
   Chat as ChatIcon,
-  Close as CloseIcon,
 } from '@mui/icons-material';
 
 interface SidebarProps {
