@@ -63,7 +63,7 @@ export function getConfig(): Config {
       logLevel: (process.env.LOG_LEVEL || "info") as "error" | "warn" | "info" | "debug",
     },
     groq: {
-      apiKey: process.env.GROQ_API_KEY || "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", //random key for testing
+      apiKey: process.env.GROQ_API_KEY || "[GROQ API KEY]", //random key for testing
       model: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
     },
     github: {
