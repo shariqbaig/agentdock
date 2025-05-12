@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "servers": {
+    "agentdock": {
+      "url": "/api/mcp",
+      "description": "AgentDock MCP Server for agent management and tool integrations",
+      "auth": {
+        "type": "none"
+      }
+    }
+  }
+}
