@@ -25,7 +25,6 @@ function App() {
               <Route path="agents/:id" element={<Agent />} />
               <Route path="tools" element={<Tools />} />
               <Route path="logs" element={<Logs />} />
-              <Route path="settings" element={<Settings />} />
               <Route index element={<Chat />} />
             </Route>
           </Routes>

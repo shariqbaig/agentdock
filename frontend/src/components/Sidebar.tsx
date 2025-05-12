@@ -17,7 +17,6 @@ import {
   People as PeopleIcon,
   Build as BuildIcon,
   Assessment as AssessmentIcon,
-  Settings as SettingsIcon,
   Chat as ChatIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
@@ -34,7 +33,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
     { text: 'Tools', path: '/tools', icon: <BuildIcon /> },
     { text: 'Logs', path: '/logs', icon: <AssessmentIcon /> },
     { text: 'Chat', path: '/', icon: <ChatIcon /> },
-    { text: 'Settings', path: '/settings', icon: <SettingsIcon /> },
   ];
 
   return (

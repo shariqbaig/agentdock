@@ -71,7 +71,7 @@ const Chat: React.FC = () => {
   // Fetch agents on component mount
   useEffect(() => {
     fetchAgents();
-  }, [fetchAgents]);
+  }, []);
 
   // Parse agent from URL query params
   useEffect(() => {
