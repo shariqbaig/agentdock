@@ -30,34 +30,15 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const location = useLocation();
 
   const menuItems = [
-    { text: 'Dashboard', path: '/', icon: <DashboardIcon /> },
     { text: 'Agents', path: '/agents', icon: <PeopleIcon /> },
     { text: 'Tools', path: '/tools', icon: <BuildIcon /> },
     { text: 'Logs', path: '/logs', icon: <AssessmentIcon /> },
-    { text: 'Chat', path: '/chat', icon: <ChatIcon /> },
+    { text: 'Chat', path: '/', icon: <ChatIcon /> },
     { text: 'Settings', path: '/settings', icon: <SettingsIcon /> },
   ];
 
   return (
     <Box sx={{ width: '100%', height: '100%' }}>
-      <Box sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        p: 2
-      }}>
-        <Typography variant="h6" fontWeight="bold">
-          AgentDock
-        </Typography>
-        {onClose && (
-          <IconButton edge="end" color="inherit" onClick={onClose} aria-label="close">
-            <CloseIcon />
-          </IconButton>
-        )}
-      </Box>
-
-      <Divider />
-
       <List sx={{ p: 2 }}>
         {menuItems.map((item) => (
           <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>

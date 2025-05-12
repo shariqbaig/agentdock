@@ -124,7 +124,7 @@ const Tools: React.FC = () => {
   useEffect(() => {
     fetchTools();
     fetchToolCategories();
-  }, [fetchTools, fetchToolCategories]);
+  }, []);
 
   // Handle tab change
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {

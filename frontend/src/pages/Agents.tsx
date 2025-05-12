@@ -106,7 +106,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onEdit, onDelete }) => {
       <CardActions sx={{ justifyContent: 'space-between', p: 2, pt: 0 }}>
         <Button
           component={RouterLink}
-          to={`/chat?agent=${agent.name}`}
+          to={`/?agent=${agent.name}`}
           startIcon={<ChatIcon />}
           color="primary"
           size="small"
