@@ -8,7 +8,7 @@ AgentDock is a Model Context Protocol (MCP) server with a clean UI to register, 
 - **Multi-Agent Support**: Register and manage multiple specialized agents
 - **Tool Integrations**: Connect with GitHub, Slack, Jira, and more
 - **Natural Language Interface**: Interact with agents using Groq LLM
-- **Clean UI**: Modern React frontend with Chakra UI
+- **Clean UI**: Modern React frontend with Material UI
 - **Modular Architecture**: Easily extend with new integrations
 - **Monitoring & Logs**: Track agent activities and system logs
 
