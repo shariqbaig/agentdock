@@ -21,7 +21,7 @@ AgentDock/
 │   ├── agents/             # Multi-agent support
 │   ├── tools/              # Tool integrations
 │   └── api/                # REST API
-├── frontend/               # React frontend with Chakra UI
+├── frontend/               # React frontend with Material UI
 ├── docker/                 # Docker configuration
 └── docs/                   # Documentation
 ```
