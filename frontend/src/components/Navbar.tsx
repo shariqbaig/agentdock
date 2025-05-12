@@ -1,39 +1,26 @@
 // frontend/src/components/Navbar.tsx
 import React from 'react';
 import {
-  Box,
-  Flex,
-  Text,
+  AppBar,
+  Toolbar,
   IconButton,
-  Button,
-  Stack,
-  Collapse,
-  Icon,
-  Link,
-  useColorModeValue,
-  useBreakpointValue,
-  useDisclosure,
-  useColorMode,
-  HStack,
-  Avatar,
+  Typography,
+  InputBase,
   Menu,
-  MenuButton,
-  MenuList,
   MenuItem,
-  MenuDivider,
-  InputGroup,
-  Input,
-  InputRightElement,
-} from '@chakra-ui/react';
+  Avatar,
+  Box,
+  Divider,
+  Button,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import {
-  HamburgerIcon,
-  CloseIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  SunIcon,
-  MoonIcon,
-  SearchIcon,
-} from '@chakra-ui/icons';
+  Menu as MenuIcon,
+  Brightness4,
+  Brightness7,
+  Search as SearchIcon,
+} from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 
 interface NavbarProps {
@@ -41,96 +28,93 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onMenuOpen }) => {
-  const { colorMode, toggleColorMode } = useColorMode();
-  const navBg = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [mode, setMode] = React.useState<'light' | 'dark'>('light');
+
+  const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const toggleColorMode = () => {
+    setMode(prev => (prev === 'light' ? 'dark' : 'light'));
+    // Implement theme switcher in context or layout if needed
+  };
 
   return (
-    <Box
-      position="fixed"
-      top="0"
-      width="100%"
-      zIndex="1000"
-      bg={navBg}
-      borderBottom="1px"
-      borderBottomColor={borderColor}
-    >
-      <Flex
-        h="64px"
-        alignItems="center"
-        justifyContent="space-between"
-        px={{ base: 4, md: 8 }}
-      >
-        <Flex alignItems="center">
-          <IconButton
-            display={{ base: 'flex', md: 'none' }}
-            onClick={onMenuOpen}
-            variant="ghost"
-            aria-label="open menu"
-            icon={<HamburgerIcon />}
-            mr={2}
-          />
-          
-          <Link as={RouterLink} to="/" _hover={{ textDecoration: 'none' }}>
-            <Text
-              fontSize="xl"
-              fontWeight="bold"
-              color={useColorModeValue('brand.500', 'white')}
-              display={{ base: 'none', md: 'block' }}
+    <AppBar position="fixed" color="default" elevation={1}>
+      <Toolbar sx={{ justifyContent: 'space-between' }}>
+        <Box display="flex" alignItems="center">
+          {isMobile && (
+            <IconButton
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              onClick={onMenuOpen}
+              sx={{ mr: 2 }}
             >
-              AgentDock
-            </Text>
-          </Link>
-        </Flex>
+              <MenuIcon />
+            </IconButton>
+          )}
+          <Typography
+            variant="h6"
+            noWrap
+            component={RouterLink}
+            to="/"
+            sx={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            AgentDock
+          </Typography>
+        </Box>
 
-        <HStack spacing={2} flex="1" mx={8}>
-          <InputGroup maxW="600px" mx="auto">
-            <Input 
+        <Box sx={{ flex: 1, maxWidth: 600, mx: 4 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: theme.palette.mode === 'light' ? '#f1f1f1' : '#424242',
+              borderRadius: 20,
+              px: 2,
+              py: 0.5,
+            }}
+          >
+            <InputBase
               placeholder="Ask anything..."
-              borderRadius="full"
-              bg={useColorModeValue('gray.100', 'gray.700')}
-              _hover={{ bg: useColorModeValue('gray.200', 'gray.600') }}
+              sx={{ ml: 1, flex: 1 }}
             />
-            <InputRightElement>
-              <IconButton
-                aria-label="Search"
-                icon={<SearchIcon />}
-                variant="ghost"
-                borderRadius="full"
-              />
-            </InputRightElement>
-          </InputGroup>
-        </HStack>
+            <IconButton size="small">
+              <SearchIcon />
+            </IconButton>
+          </Box>
+        </Box>
 
-        <HStack spacing={4}>
-          <IconButton
-            aria-label="Toggle Color Mode"
-            icon={colorMode === 'light' ? <MoonIcon /> : <SunIcon />}
-            onClick={toggleColorMode}
-            variant="ghost"
-          />
-          
-          <Menu>
-            <MenuButton
-              as={Button}
-              rounded={'full'}
-              variant={'link'}
-              cursor={'pointer'}
-              minW={0}
-            >
-              <Avatar size="sm" src="https://bit.ly/broken-link" />
-            </MenuButton>
-            <MenuList>
-              <MenuItem>Profile</MenuItem>
-              <MenuItem>Settings</MenuItem>
-              <MenuDivider />
-              <MenuItem>Documentation</MenuItem>
-              <MenuItem>Sign out</MenuItem>
-            </MenuList>
+        <Box display="flex" alignItems="center" gap={2}>
+          <IconButton onClick={toggleColorMode} color="inherit">
+            {mode === 'light' ? <Brightness4 /> : <Brightness7 />}
+          </IconButton>
+
+          <IconButton onClick={handleMenu}>
+            <Avatar src="https://bit.ly/broken-link" />
+          </IconButton>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleClose}
+          >
+            <MenuItem onClick={handleClose}>Profile</MenuItem>
+            <MenuItem onClick={handleClose}>Settings</MenuItem>
+            <Divider />
+            <MenuItem onClick={handleClose}>Documentation</MenuItem>
+            <MenuItem onClick={handleClose}>Sign out</MenuItem>
           </Menu>
-        </HStack>
-      </Flex>
-    </Box>
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
 };
 

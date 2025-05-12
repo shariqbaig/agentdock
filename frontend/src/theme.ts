@@ -1,79 +1,77 @@
-// frontend/src/theme.ts
-import { extendTheme, ThemeConfig } from '@chakra-ui/react';
+import { createTheme } from '@mui/material/styles';
 
-// Color mode config
-const config: ThemeConfig = {
-  initialColorMode: 'light',
-  useSystemColorMode: true,
-};
-
-// Extend the theme
-const theme = extendTheme({
-  config,
-  colors: {
-    brand: {
-      50: '#e6f7ff',
-      100: '#b3e0ff',
-      200: '#80caff',
-      300: '#4db3ff',
-      400: '#1a9dff',
-      500: '#0080ff',
-      600: '#0066cc',
-      700: '#004d99',
-      800: '#003366',
-      900: '#001a33',
+// Create a custom theme for MUI
+const theme = createTheme({
+  palette: {
+    primary: {
+      light: '#d9e2ff',
+      main: '#4a5af9',
+      dark: '#3a41e0',
+      contrastText: '#fff',
     },
+    success: {
+      light: '#c4eedb',
+      main: '#32b281',
+      dark: '#288c66',
+      contrastText: '#fff',
+    },
+    warning: {
+      light: '#ffeabf',
+      main: '#e69c00',
+      dark: '#b37800',
+      contrastText: '#fff',
+    },
+    error: {
+      light: '#f7c2c2',
+      main: '#c23535',
+      dark: '#982828',
+      contrastText: '#fff',
+    },
+    // You can customize more colors like background, text, etc.
   },
-  fonts: {
-    heading: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-    body: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-    mono: '"JetBrains Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+  typography: {
+    fontFamily: '"Segoe UI", Arial, sans-serif', // Customize fonts here
   },
   components: {
-    Button: {
-      baseStyle: {
-        fontWeight: '500',
-        borderRadius: 'md',
-      },
-      variants: {
-        primary: {
-          bg: 'brand.500',
-          color: 'white',
-          _hover: {
-            bg: 'brand.600',
-          },
-          _active: {
-            bg: 'brand.700',
-          },
+    // Customize components here (for example, Button)
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          fontWeight: 600,
+          borderRadius: '8px',
+          transition: 'all 0.3s ease-in-out',
         },
-      },
-    },
-    Card: {
-      baseStyle: {
-        container: {
-          borderRadius: 'lg',
-          boxShadow: 'md',
-        },
-      },
-    },
-    Sidebar: {
-      baseStyle: {
-        container: {
-          bg: 'white',
-          _dark: {
-            bg: 'gray.800',
+        containedPrimary: {
+          backgroundColor: '#4a5af9',
+          '&:hover': {
+            backgroundColor: '#3a41e0',
+            transform: 'translateY(-2px)',
+            boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
           },
         },
       },
     },
-  },
-  styles: {
-    global: (props: any) => ({
-      body: {
-        bg: props.colorMode === 'dark' ? 'gray.900' : 'gray.50',
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: '12px',
+          boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)',
+          transition: 'all 0.3s ease-in-out',
+          '&:hover': {
+            boxShadow: '0px 6px 12px rgba(0, 0, 0, 0.15)',
+          },
+        },
       },
-    }),
+    },
+    MuiModal: {
+      styleOverrides: {
+        root: {
+          borderRadius: '12px',
+        },
+      },
+    },
   },
 });
 
+// Export the theme to be used in the app
 export default theme;

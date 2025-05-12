@@ -1,6 +1,4 @@
-// frontend/src/App.tsx
-import React from 'react';
-import { ChakraProvider, Box } from '@chakra-ui/react';
+import { ThemeProvider } from '@mui/material/styles';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 // Components
@@ -15,12 +13,13 @@ import Chat from './pages/Chat';
 
 // Theme
 import theme from './theme';
+import { Box } from '@mui/material';
 
 function App() {
   return (
-    <ChakraProvider theme={theme}>
+    <ThemeProvider theme={theme}>
       <Router>
-        <Box minH="100vh">
+        <Box sx={{ minHeight: '100vh' }}>
           <Routes>
             <Route path="/" element={<Layout />}>
               <Route index element={<Dashboard />} />
@@ -34,7 +33,7 @@ function App() {
           </Routes>
         </Box>
       </Router>
-    </ChakraProvider>
+    </ThemeProvider>
   );
 }
 
