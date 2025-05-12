@@ -44,6 +44,7 @@ router.post("/", async (req: Request, res: Response): Promise<any> => {
   };
 
   try {
+    logger.info(`Process a natural language query`);
     const { query, agent, context } = QueryRequestSchema.parse(req.body);
     logEntry.query = query;
     logEntry.agent = agent;
