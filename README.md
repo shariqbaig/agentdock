@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/shariqbaig-agentdock-badge.png)](https://mseep.ai/app/shariqbaig-agentdock)
+
 # AgentDock
 
 AgentDock is a Model Context Protocol (MCP) server with a clean UI to register, manage, and interact with intelligent agents. It enables multi-agent orchestration, tool integrations (e.g., GitHub, Slack, Jira), and LLM-powered interactions via Groq.
